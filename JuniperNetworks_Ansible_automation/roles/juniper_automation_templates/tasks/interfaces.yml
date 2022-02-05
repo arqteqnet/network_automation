@@ -1,0 +1,5 @@
+---
+- name: group settings
+  template:
+    src: interfaces.j2
+    dest: "{{ config_assemble_build }}/interfaces.conf"

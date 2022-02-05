@@ -1,0 +1,221 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if "srx" in personality %}
+{% if address_entries_common is defined or address_entries_datacentre is defined or address_entries_branch is defined or address_entries is defined %}
+security {
+    address-book {
+    {% if address_entries_common is defined %}
+    {% for add_book, address in address_entries_common.items() %}
+        {% set address_book_var = add_book %}
+        {{ add_book }} {
+        {% for entry in address %}
+        {% if entry.ip is defined and entry.description is not defined %}
+            address {{ entry.name }} {{ entry.ip }}/{{ entry.mask }};
+        {% elif entry.ip is defined and entry.description is defined %}
+            address {{ entry.name }} {
+                description {{ entry.description }};
+                {{ entry.ip }}/{{ entry.mask }};
+            }
+            {% elif entry.fqdn is defined and entry.description is not defined %}
+            address {{ entry.name }} {
+                dns-name {{ entry.fqdn }} {
+                    {{ entry.lookup_version }};
+                }
+            }
+        {% elif entry.fqdn is defined and entry.description is defined %}
+            address {{ entry.name }} {
+                description "{{ entry.descritpion }}";
+                dns-name {{ entry.fqdn }} {
+                    {{ entry.lookup_verson }};
+                }
+            }
+        {% endif %}
+        {% endfor %}
+
+        {% if address_groups_common is defined %}
+            {% for addrs, resources in address_groups_common.items() %}
+            {% if addrs == address_book_var %}
+            {% for group in resources %}
+            {% if group.name is defined %}
+            {% if group.address is string %}
+            address-set {{ group.name }} {
+                address {{ group.address }};
+            }
+            {% else %}
+            address-set {{ group.name }} {
+            {% for res in group.address %}
+                address {{ res }};
+            {% endfor %}
+            }
+            {% endif %}
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+        }
+    {% endfor %}
+    {% endif %}
+    {% if address_entries is defined %}
+    {% for add_book, address in address_entries.items() %}
+        {% set address_book_var = add_book %}
+        {{ add_book }} {
+        {% for entry in address %}
+        {% if entry.ip is defined and entry.description is not defined %}
+            address {{ entry.name }} {{ entry.ip }}/{{ entry.mask }};
+        {% elif entry.ip is defined and entry.description is defined %}
+            address {{ entry.name }} {
+                description {{ entry.description }};
+                {{ entry.ip }}/{{ entry.mask }};
+            }
+            {% elif entry.fqdn is defined and entry.description is not defined %}
+            address {{ entry.name }} {
+                dns-name {{ entry.fqdn }} {
+                    {{ entry.lookup_version }};
+                }
+            }
+        {% elif entry.fqdn is defined and entry.description is defined %}
+            address {{ entry.name }} {
+                description "{{ entry.descritpion }}";
+                dns-name {{ entry.fqdn }} {
+                    {{ entry.lookup_verson }};
+                }
+            }
+        {% endif %}
+        {% endfor %}
+
+        {% if address_groups is defined %}
+            {% for addrs, resources in address_groups.items() %}
+            {% if addrs == address_book_var %}
+            {% for group in resources %}
+            {% if group.name is defined %}
+            {% if group.address is string %}
+            address-set {{ group.name }} {
+                address {{ group.address }};
+            }
+            {% else %}
+            address-set {{ group.name }} {
+            {% for res in group.address %}
+                address {{ res }};
+            {% endfor %}
+            }
+            {% endif %}
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+        }
+    {% endfor %}
+    {% endif %}
+
+{% if address_entries_datacentre is defined %}
+{% for add_book, address in address_entries_datacentre.items() %}
+    {% set address_book_var = add_book %}
+    {{ add_book }} {
+    {% for entry in address %}
+    {% if entry.ip is defined and entry.description is not defined %}
+        address {{ entry.name }} {{ entry.ip }}/{{ entry.mask }};
+    {% elif entry.ip is defined and entry.description is defined %}
+        address {{ entry.name }} {
+            description {{ entry.description }};
+            {{ entry.ip }}/{{ entry.mask }};
+        }
+        {% elif entry.fqdn is defined and entry.description is not defined %}
+        address {{ entry.name }} {
+            dns-name {{ entry.fqdn }} {
+                {{ entry.lookup_version }};
+            }
+        }
+    {% elif entry.fqdn is defined and entry.description is defined %}
+        address {{ entry.name }} {
+            description "{{ entry.descritpion }}";
+            dns-name {{ entry.fqdn }} {
+                {{ entry.lookup_verson }};
+            }
+        }
+    {% endif %}
+    {% endfor %}
+
+    {% if address_groups_datacentre is defined %}
+        {% for addrs, resources in address_groups_datacentre.items() %}
+        {% if addrs == address_book_var %}
+        {% for group in resources %}
+        {% if group.name is defined %}
+        {% if group.address is string %}
+        address-set {{ group.name }} {
+            address {{ group.address }};
+        }
+        {% else %}
+        address-set {{ group.name }} {
+        {% for res in group.address %}
+            address {{ res }};
+        {% endfor %}
+        }
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    }
+{% endfor %}
+{% endif %}
+
+{% if address_entries_branch is defined %}
+{% for add_book, address in address_entries_branch.items() %}
+    {% set address_book_var = add_book %}
+    {{ add_book }} {
+    {% for entry in address %}
+    {% if entry.ip is defined and entry.description is not defined %}
+        address {{ entry.name }} {{ entry.ip }}/{{ entry.mask }};
+    {% elif entry.ip is defined and entry.description is defined %}
+        address {{ entry.name }} {
+            description {{ entry.description }};
+            {{ entry.ip }}/{{ entry.mask }};
+        }
+        {% elif entry.fqdn is defined and entry.description is not defined %}
+        address {{ entry.name }} {
+            dns-name {{ entry.fqdn }} {
+                {{ entry.lookup_version }};
+            }
+        }
+    {% elif entry.fqdn is defined and entry.description is defined %}
+        address {{ entry.name }} {
+            description "{{ entry.descritpion }}";
+            dns-name {{ entry.fqdn }} {
+                {{ entry.lookup_verson }};
+            }
+        }
+    {% endif %}
+    {% endfor %}
+
+    {% if address_groups_branch is defined %}
+        {% for addrs, resources in address_groups_branch.items() %}
+        {% if addrs == address_book_var %}
+        {% for group in resources %}
+        {% if group.name is defined %}
+        {% if group.address is string %}
+        address-set {{ group.name }} {
+            address {{ group.address }};
+        }
+        {% else %}
+        address-set {{ group.name }} {
+        {% for res in group.address %}
+            address {{ res }};
+        {% endfor %}
+        }
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    }
+{% endfor %}
+{% endif %}
+
+    }
+}
+{% endif %}
+{% endif %}

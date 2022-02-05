@@ -1,0 +1,89 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if "srx" in personality %}
+{% if ip_sla is defined %}
+services {
+    {% if ip_sla.rpm is defined %}
+    rpm {
+        {% for probe, details in ip_sla.rpm.items() %}
+        probe {{ probe }} {
+            test {{ details.test_name}} {
+                target address {{ details.target_dst }};
+                probe-count {{ details.probe_count }};
+                probe-interval {{ details.probe_interval }};
+                {% if details.test_interval is defined %}
+                test-interval {{ details.test_interval }};
+                {% endif %}
+                {% if details.vrf is defined %}
+                routing-instance {{ details.vrf }};
+                {% endif %}
+                {% if details.history_size %}
+                history-size {{ details.history_size }};
+                {% else %}
+                history-size 128;
+                {% endif %}
+                {% if details.threshold is defined %}
+                thresholds {
+                    successive-loss {{ details.threshold.success_loss }};
+                    total-loss {{ details.threshold.total_loss}};
+                }
+                {% else %}
+                thresholds {
+                    successive-loss 3;
+                    total-loss 3;
+                }
+                {% endif %}
+                {% if details.dst_iface is defined %}
+                destination-interface {{ details.dst_iface }};
+                {% endif %}
+                {% if details.next_hop is defined %}
+                next-hop {{ details.next_hop }};
+                {% endif %}
+            }
+        }
+    {% endfor %}
+    }
+    {% endif %}
+    {% if ip_sla.ip_monitoring is defined %}
+    ip-monitoring {
+        {% for policy, details in ip_sla.ip_monitoring %}
+        {% if ip_sla.rpm[details.probe_name] is defined %}
+        policy {{ policy }} {
+            {% if details.no_preempt is defined %}
+            {% if details.no_preempt == True %}
+            no-preempt;
+            {% endif %}
+            {% endif %}
+            match {
+                rpm-probe {{ details.probe_name }};
+            }
+            then {
+                {% if details.preferred_route is defined %}
+                preferred-route {
+                    {% if details.preferred_route.vrf is defined %}
+                    routing-instances {{ details.preferred_route.vrf }} {
+                        route {{ details.preferred_route.route }} {
+                            next-hop {{ details.preferred_route.next-hop }};
+                        }
+                    }
+                    {% else %}
+                        route {{ details.preferred_route.route }} {
+                            next-hop {{ details.preferred_route.next-hop }};
+                        }
+                    {% endif %}
+                }
+                {% endif %}
+                {% if details.interface_action is defined %}
+                interface {% details.interface_action.iface %} {
+                    {% details.interface_action.action %};
+                }
+                {% endif %}
+            }
+        }
+        {% endif %}
+        {% endfor %}
+    }
+    {% endif %}
+}
+{% endif %}
+{% endif %}

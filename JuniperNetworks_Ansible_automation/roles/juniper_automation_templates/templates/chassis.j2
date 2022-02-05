@@ -1,0 +1,97 @@
+#jinja2:lstrip_blocks:True
+{% set hostname = junos.hostname | lower %}
+{% set personality = junos.personality | lower %}
+{% set model = junos.model | lower %}
+{% if chassis is defined %}
+chassis {
+{% if personality == "switch" %}
+    {% if chassis.graceful_switchover is defined %}
+    {% if chassis.graceful_switchover == True %}
+    redundancy {
+        graceful-switchover;
+    }
+    {% endif %}{% endif %}
+    {% if chassis.aggregated_devices is defined %}
+    aggregated-devices {
+        ethernet {
+            device-count {{ chassis.aggregated_devices }};
+        }
+    }
+    {% endif %}
+    {% if chassis.daughter_card is defined %}
+    {% for fcp, config in chassis.daughter_card.items() %}
+    fpc {{ fpc }} {
+        pic {{ config.pic }} {
+            {% if config.sfp_plus_mode is defined %}
+            sfpplus {
+                pic-mode {{ config.sfp_plus_mode }};
+            }
+            {% endif %}
+        }
+    }
+    {% endfor %}
+    {% endif %}
+    {% if chassis.tunnel_services is defined %}
+    {% for service in chassis.tunnel_services %}
+    fpc {{ service.fpc }} {
+        pic {{ service.pic }} {
+            tunnel-services;
+        }
+    }
+    {% endfor %}
+    {% endif %}
+    {% if chassis.pfe is defined %}
+    {% if model == "mx104" %}
+    {% if chassis.pfe.sampling is defined %}
+    afeb {
+        slot {{ chassis.pfe.sampling.slot }} {
+            sampling-instance {{ chassis.pfe.sampling.sampler_name }};
+        }
+    }
+    {% endif %}{% endif %}{% endif %}
+    {% if chassis.network_services is defined %}
+    network-services {{ chassis.network_services }};
+    {% endif %}
+    {% if chassis.alarms is defined %}
+    alarm {
+        {% if chassis.alarms.management_ethernet_ignore is defined %}
+        management-ethernet {
+            link-down ignore;
+        }
+        {% endif %}
+    }
+    {% endif %}
+    {% if chassis.auto_upgade is defined %}
+    auto-image-upgrade;
+    {% endif %}
+{% endif %}
+    {% if junos.srx_cluster == True %}
+    {% if chassis.srx_cluster_options is defined %}
+    cluster {
+        {% if chassis.srx_cluster_options.control_link_recovery == True %}
+        control-link-recovery;
+        {% endif %}
+        {% if chassis.srx_cluster_options.reth_devices is defined %}
+        reth-count {{ chassis.srx_cluster_options.reth_devices }};
+        {% endif %}
+        {% if chassis.srx_cluster_options.redundancy_groups is defined %}
+        {% for rg, config in chassis.srx_cluster_options.redundancy_groups.items() %}
+        redundancy-group {{ rg }} {
+            node 1 priority {{ config.node1_priority }};
+            node 0 priority {{ config.node0_priority}};
+            {% if config.interface_monitor is defined and rg != 0 %}
+            interface-monitor {
+                {% for iface_mon in config.interface_monitor %}
+                {{ iface_mon.iface }} weight {{ iface_mon.weight }};
+                {% endfor %}
+                }
+            {% endif %}
+            }
+        {% endfor %}
+        {% endif %}
+
+        }
+    {% endif %}
+    {% endif %}
+}
+{% endif %}

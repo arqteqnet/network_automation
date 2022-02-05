@@ -1,0 +1,5 @@
+---
+- name: dhcp server settings
+  template:
+    src: dhcp.j2
+    dest: "{{ config_assemble_build }}/dhcp.conf"

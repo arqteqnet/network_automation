@@ -1,0 +1,194 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% set switch_style = junos.switch_style | lower %}
+{% if group_config is defined %}
+groups {
+    {% if group_config.nodes is defined %}
+    {% for node, config in group_config.nodes.items() %}
+    {{ node }} {
+            {% if config.system is defined %}
+        system {
+            {% if config.system.hostname is defined %}
+            host-name {{ config.system.hostname }};
+            {% endif %}
+            {% if config.system.backup_router is defined and 'srx' in personality %}
+            {% if config.system.backup_router.routes is string or config.system.backup_router.routes is number %}
+            backup-router {{ config.system.backup_router.gateway }} destination {{ config.system.backup_router.routes }};
+            {% else %}
+            backup-router {{ config.system.backup_router.gateway }} destination [ {{ config.system.backup_router.routes|join (" ") }} ];
+            {% endif %}{% endif %}
+        }
+        {% endif %}
+        {% if config.interfaces is defined %}
+        {% for iface, data in config.interfaces.items() %}
+        interfaces {
+            {{ iface }} {
+                {% if data.speed is defined %}
+                speed {{ data.speed }};
+                {% endif %}
+                {% if data.native_vlan is defined and switch_style != 'vlan' %}
+                native-vlan-id {{ data.native_vlan }};
+                {% endif %}
+            {% if data.logical is defined %}
+            {% for subint in data.logical %}
+            unit {{ subint.unit }} {
+                {% if subint.family == "ethernet-switching" %}
+                family ethernet-switching {
+                {% if subint.native_vlan is defined and switch_style == 'vlan' %}
+                native-vlan-id {{ subint.native_vlan }};
+                {% endif %}
+                {% if subint.port_mode is defined and switch_style == 'vlan' %}
+                    port-mode {{ subint.port_mode }};
+                {% endif %}
+                {% if subint.port_mode is defined and switch_style != 'vlan' %}
+                    interface-mode {{ subint.port_mode }};
+                {% endif %}
+                {% if subint.vlan is defined %}
+                {% if subint.vlan is string or subint.vlan is number %}
+                    vlan {
+                        members {{ subint.vlan }};
+                    }
+                {% else %}
+                    vlan {
+                        members [ {{ subint.vlan|join(" ") }} ];
+                    }
+                {% endif %}
+                {% endif %}
+                }
+                {% endif %}
+                {% if subint.family == "inet" %}
+                    family inet {
+                {% if subint.ipv4_master_only is defined %}
+                    address {{ subint.ipv4_master_only }}/{{ subint.ipv4_mask }} {
+                    master-only;
+                    }
+                    {% endif %}
+                    {% if subint.ipv4_address is defined %}
+                    address {{ subint.ipv4_address }}/{{ subint.ipv4_mask }};
+                    {% endif %}
+                }
+                {% endif %}
+                }
+            {% endfor %}
+            {% endif %}
+            }
+        }
+        {% endfor %}
+        {% endif %}
+    }
+    {% endfor %}{% endif %}
+
+    {% if group_config.groups is defined %}
+    {% for grp, config in group_config.groups.items() %}
+    {{ grp }} {
+        {% if config.interfaces is defined %}
+        {% for iface, data in config.interfaces.items() %}
+        interfaces {
+            {{ iface }} {
+                        {% if data.speed is defined %}
+                        speed {{ data.speed }};
+                        {% endif %}
+                        {% if data.native_vlan is defined and switch_style != 'vlan' %}
+                        native-vlan-id {{ data.native_vlan }};
+                        {% endif %}
+            {% if data.logical is defined %}
+            {% for subint in data.logical %}
+                unit {{ subint.unit }} {
+                    {% if subint.family == "ethernet-switching" %}
+                    family ethernet-switching {
+                    {% if subint.native_vlan is defined and switch_style == 'vlan' %}
+                    native-vlan-id {{ subint.native_vlan }};
+                    {% endif %}
+                    {% if subint.port_mode is defined and switch_style == 'vlan' %}
+                        port-mode {{ subint.port_mode }};
+                    {% endif %}
+                    {% if subint.port_mode is defined and switch_style != 'vlan' %}
+                        interface-mode {{ subint.port_mode }};
+                    {% endif %}
+                    {% if subint.vlan is defined %}
+                    {% if subint.vlan is string or subint.vlan is number %}
+                        vlan {
+                            members {{ subint.vlan }};
+                        }
+                    {% else %}
+                        vlan {
+                            members [ {{ subint.vlan|join(" ") }} ];
+                        }
+                    {% endif %}
+                    {% endif %}
+                    }
+                    {% endif %}
+                    {% if subint.family == "inet" %}
+                        family inet {
+                        {% if subint.ipv4_master_only is defined %}
+                        address {{ subint.ipv4_master_only }}/{{ subint.ipv4_mask }} {
+                            master-only;
+                        }
+                        {% endif %}
+                        {% if subint.ipv4_address is defined %}
+                        address {{ subint.ipv4_address }}/{{ subint.ipv4_mask }};
+                        {% endif %}
+
+                    }
+                {% endif %}
+                }
+            {% endfor %}
+            {% endif %}
+            {% if "srx" not in personality %}
+            {% if data.bond_ether_options is defined %}
+                aggregated-ether-options {
+                    {% if data.bond_ether_options.min_links is defined %}
+                    minimum-links {{ 1 }};
+                    {% endif %}
+                    {% if data.bond_ether_options.speed is defined %}
+                    link-speed {{ data.bond_ether_options.speed }};
+                    {% endif %}
+                    {% if data.bond_ether_options.lacp is defined %}
+                    lacp {
+                        {% if data.bond_ether_options.lacp.lacp_state is defined %}
+                        {{ data.bond_ether_options.lacp.lacp_state }};
+                        {% endif %}
+                        {% if data.bond_ether_options.lacp.lacp_timers is defined %}
+                        periodic {{ data.bond_ether_options.lacp.lacp_timers }};
+                        {% endif %}
+                    }
+                    {% endif %}
+                }
+            {% endif %}
+            {% if data.ether_options is defined %}
+                ether-options {
+                    {% if data.ether_options.negotiation is defined %}
+                    {{ data.ether_options.negotiation }};
+                    {% endif %}
+                    {% if data.ether_options.link_mode is defined %}
+                    link-mode {{ data.ether_options.link_mode }}-duplex;
+                    {% endif %}
+                {% if data.ether_options.bond_parent is defined %}
+                    802.3ad {{ data.ether_options.bond_parent }};
+                {% endif %}
+                }
+            {% endif %}
+            {% endif %}
+            {% if "srx" in personality %}
+            {% if data.gigether_options is defined %}
+                gigether-options {
+                {% if data.gigether_options.reth_parent is defined %}
+                    redundant-parent {{ data.gigether_options.reth_parent }};
+                {% endif %}
+                }
+            {% endif %}{% endif %}
+            }
+        }
+    {% endfor %}
+    {% endif %}
+    }
+    {% endfor %}{% endif %}
+}
+{% if group_config.global_group_apply is defined %}
+{% if group_config.global_group_apply is string %}
+apply-groups {{ group_config.global_group_apply }};
+{% else %}
+apply-groups [ {{ group_config.global_group_apply|join(" ") }} ];
+{% endif %}
+{% endif %}
+{% endif %}

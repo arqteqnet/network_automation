@@ -1,0 +1,57 @@
+---
+- name: Generate, Assemble and Config to Juniper devices, default with no action
+  hosts:
+    - juniper
+  roles:
+    - { role: Juniper.junos, tags: [ always ] }
+    - { role: config_setup_commit,  tags: [ always ] }
+    - juniper_automation_templates
+  connection: local
+  gather_facts: no
+
+  vars:
+    file_name: {{ ansible_host }}
+
+  vars_prompt:
+    - name: vars_prompt_username
+      prompt: "Enter your Juniper username ?"
+      private: no
+    - name: playbook_name
+      prompt: "Commit Description to be added to Juniper changes?"
+      private: no
+
+
+  tasks:
+
+    - name: assemble config fragments and perform Diff of Config Merge
+      tags: [ never, diff_merge ]
+      assemble:
+       src: "{{ config_assemble_build }}"
+       dest: "{{ config_file }}"
+      notify:
+       - Merge Diff
+
+    - name: assemble config fragments and perform Diff of Config Merge
+      tags: [ never, diff_override ]
+      assemble:
+       src: "{{ config_assemble_build }}"
+       dest: "{{ config_file }}"
+      notify:
+       - Override Diff
+
+
+    - name: assemble config fragments and merge changes
+      tags: [ merge, never ]
+      assemble:
+        src: "{{ config_assemble_build }}"
+        dest: "{{ config_file }}"
+      notify:
+       - Merge Config
+
+    - name: assemble config fragments and overwrite config
+      tags: [ override, never ]
+      assemble:
+        src: "{{ config_assemble_build }}"
+        dest: "{{ config_file }}"
+      notify:
+        - Override Config

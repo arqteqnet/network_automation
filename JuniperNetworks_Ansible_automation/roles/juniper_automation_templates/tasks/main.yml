@@ -1,0 +1,275 @@
+---
+
+- name: import and configure groups
+  include: groups.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - system
+    - bonds
+    - groups
+    - lacp
+
+- name: import and configure systems
+  include: system.yml
+  tags:
+    - override
+    - all
+    - diff_override
+    - system
+    - ntp
+    - dns
+    - ssh
+    - users
+    - netconf
+    - syslog
+    - archiving
+
+- name: import and configure archival
+  include: archival.yml
+  tags:
+    - override
+    - all
+    - diff_override
+    - archival
+
+
+- name: import and configure snmp
+  include: snmp.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - snmp
+    - monitoring
+
+- name: import and configure interfaces
+  include: interfaces.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - groups
+    - filters
+    - prefix_lists
+    - nat
+    - bgp
+    - ospf
+    - ike
+    - mgmt
+
+- name: import and configure nat services
+  include: nat_translation.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - filters
+    - prefix_lists
+    - nat
+    - address_books
+
+- name: import and configure chassis
+  include: chassis.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - groups
+    - clusters
+    - vc
+    - reth
+    - bonds
+
+- name: import and configure vlans
+  include: vlans.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - groups
+    - vlans
+    - l2_protocols
+    - bonds
+
+- name: import and configure virtual chassis
+  include: virtual_chassis.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - virtual_chassis
+    - switching
+
+
+- name: import and configure l2_protocols
+  include: l2_protocols.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - groups
+    - vlans
+    - l2_protocols
+    - lldp
+    - spanning_tree
+    - storm_control
+
+- name: import and configure aaa services
+  include: aaa.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - aaa
+    - dot1x
+
+- name: import and configure dhcp services
+  include: dhcp.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - dhcp
+
+- name: import and configure storm control
+  include: storm_control.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - groups
+    - storm_control
+    - switching
+
+- name: import and configure filters
+  include: filters.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - filters
+    - interfaces
+    - policers
+    - security
+    - cpp
+
+
+- name: import and configure routes
+  include: routes.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - interfaces
+    - groups
+    - vlans
+    - l3_protocols
+    - mgmt
+    - pbr
+    - routes
+
+- name: import and configure prefix_lists
+  include: prefix_lists.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - filters
+    - route_maps
+    - bgp
+    - policers
+    - prefix_lists
+
+- name: import and configure policers
+  include: policers.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - policers
+    - fitlers
+    - cpp
+
+- name: import and configure applications
+  include: applications.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - firewall
+    - security_policies
+    - nat
+    - applications
+
+- name: import and configure security_zones
+  include: security_zones.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - firewall
+    - groups
+    - security_zones
+    - interfaces
+    - applications
+
+- name: import and configure security_policies
+  include: security_policies.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - applications
+    - firewall
+    - security_policies
+    - security_zones
+
+- name: import and configure ipsec vpn
+  include: ipsec.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - ipsec
+    - firewall
+    - interfaces
+
+- name: import and configure address_books
+  include: address_books.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - security_policies
+    - firewall
+    - applications
+
+- name: import and configure policy_options
+  include: policy_options.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - communities
+    - route_maps
+    - interfaces
+- name: import and configure policy_options
+  include: bgp.yml
+  tags:
+    - diff_override
+    - override
+    - all
+    - communities
+    - route_maps
+    - prefix_lists
+    - l3_protocols

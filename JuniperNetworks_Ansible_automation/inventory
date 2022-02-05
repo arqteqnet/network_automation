@@ -1,0 +1,33 @@
+[juniper]
+omsw.infra.mgmt.example.com ansible_host=10.192.100.10
+sfw.infra.mgmt.example.com ansible_host=10.192.100.50
+pxe-sw.infra.mgmt.example.com ansible_host=10.192.100.20
+edge-rtr.infra.mgmt.example.com ansible_host=10.192.100.250
+
+[juniper_firewalls]
+sfw.infra.mgmt.example.com
+
+[juniper_branch_firewalls]
+
+[juniper_datacentre_firewalls]
+
+
+[juniper_routers]
+edge-rtr.infra.mgmt.example.com
+
+[juniper_branch_routers]
+
+
+[junier_datacentre_routers]
+edge-rtr.infra.mgmt.example.com
+
+
+[juniper_prod_firewalls]
+sfw.infra.mgmt.example.com
+
+
+[juniper_datacentre1]
+sfw.infra.mgmt.example.com
+omsw.infra.mgmt.example.com
+pxe-sw.infra.mgmt.example.com
+edge-rtr.infra.mgmt.example.com

@@ -1,0 +1,237 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% set hostname = junos.hostname | lower %}
+{% if "srx" in personality %}
+{% if nat_translations_common is defined or nat_translations is defined %}
+security {
+    nat {
+        {% if nat_translations.source_nat is defined%}
+        source {
+            {% if nat_translations.source_nat.pools is defined %}
+            {% for pool, config in nat_translations.source_nat.pools.items() %}
+            {% if config.port is defined %}
+            pool {{ pool }} {
+                address {
+                    {{ config.address}} port {{ config.port }};
+                }
+            {% else %}
+            pool {{ pool }} {
+                address {
+                    {{ config.address}};
+                }
+            {% endif %}
+                {% if config.port_options is defined %}
+                port {
+                    {% if config.port_options.overloading is defined %}
+                    port-overloading-factor {{ config.port_options.overloading }};
+                    {% endif %}
+                }
+                {% endif %}
+            }
+            {% endfor %}
+            {% endif %}
+            {% if nat_translations.source_nat.rule_sets is defined %}
+            {% for rule_set, rule_config in nat_translations.source_nat.rule_sets.items() %}
+            rule-set {{ rule_set }} {
+                {% if rule_config.from_zone is defined %}
+                {% if rule_config.from_zone is string %}
+                from zone {{ rule_config.from_zone }};
+                {% else %}
+                from zone [ {{ rule_config.from_zone|join(" ") }} ];
+                {% endif %}{% endif %}
+                {% if rule_config.to_zone is defined %}
+                {% if rule_config.to_zone is string %}
+                to zone {{ rule_config.to_zone }};
+                {% else %}
+                to zone [ {{ rule_config.to_zone|join(" ") }} ];
+                {% endif %}{% endif %}
+                {% if rule_config.rules is defined %}
+                {% for rule, cfg in rule_config.rules.items() %}
+                rule {{ rule }} {
+                    match {
+                        {% if cfg.src_add is defined and cfg.src_add is string %}
+                        source-address {{ cfg.src_add }};
+                        {% elif cfg.src_add is defined and cfg.src_add is not string %}
+                        source-address {{ cfg.src_add|join(" ") }};
+                        {% endif %}
+                        {% if cfg.src_add_name is defined and cfg.src_add_name is string %}
+                        source-address-name {{ cfg.src_add_name }};
+                        {% elif cfg.src_add_name is defined and cfg.src_add_name is not string %}
+                        source-address-name [ {{ cfg.src_add_name|join(" ") }} ];
+                        {% endif %}
+                        {% if cfg.dst_add is defined and cfg.dst_add is string %}
+                        destination-address {{ cfg.dst_add }};
+                        {% elif cfg.dst_add is defined and cfg.dst_add is not string %}
+                        destination-address [ {{ cfg.dst_add|join(" ") }} ];
+                        {% endif %}
+                        {% if cfg.dst_add_name is defined and cfg.dst_add_name is string %}
+                        destination-address-name {{ cfg.dst_add_name }};
+                        {% elif cfg.dst_add_name is defined and cfg.dst_add_name is not string %}
+                        destination-address-name [ {{ cfg.dst_add_name|join(" ") }} ];
+                        {% endif %}
+                        {% if cfg.dest_port is defined or cfg.dest_port_range is defined or cfg.protocol is defined %}
+                        {% if cfg.protocol is defined %}
+                        protocol {{ cfg.protocol }};
+                        {% endif %}
+                        {% if cfg.dest_port is defined %}
+                        destination-port {
+                            {% if cfg.dest_port is number %}
+                            {{ cfg.dest_port }};
+                            {% else %}
+                            {% for port in cfg.dest_port %}
+                            {{ port }};
+                            {% endfor %}
+                            {% endif %}
+                        }
+                        {% endif %}
+                        {% if cfg.dest_port is defined %}
+                        destination-port {
+                            {% if cfg.dest_port_range is number %}
+                            {{ cfg.dest_port_range[0] }} to {{ cfg.dest_port_range[1] }};
+                            {% endif %}
+                        }
+                        {% endif %}
+                        {% else %}
+                        {% if cfg.application is defined and cfg.application is string %}
+                        application {{ cfg.application }};
+                        {% elif cfg.application  is defined and cfg.application is not string %}
+                        application [ {{ cfg.application|join(" ") }} ];
+                        {% endif %}
+                        {% endif %}
+
+                    }
+                    then {
+                        source-nat {
+                            {% if cfg.nat_off is defined %}
+                            {% if cfg.nat_off == True %}
+                            off;
+                            {% endif %}{% endif %}
+                            {% if cfg.nat_pool is defined %}
+                            pool {
+                                {{ cfg.nat_pool }};
+                            }
+                            {% endif %}
+                            {% if cfg.interface_nat is defined %}
+                            {% if cfg.interface_nat == True %}
+                            interface;
+                            {% endif %}{% endif %}
+
+                        }
+                    }
+                }
+                {% endfor %}
+                {% endif %}
+            }
+            {% endfor %}
+            {% endif %}
+        }
+    {% endif %}
+
+        {% if nat_translations.destination_nat is defined %}
+        destination {
+            {% if nat_translations.destination_nat.pools is defined %}
+            {% for pool, config in nat_translations.destination_nat.pools.items() %}
+            {% if config.port is defined %}
+            pool {{ pool }} {
+                address {{ config.address}} port {{ config. port }};
+                }
+            {% else %}
+            pool {{ pool }} {
+                address {{ config.address}};
+                }
+            {% endif %}
+                {% if config.port_options is defined %}
+                port {
+                    {% if config.port_options.overloading is defined %}
+                    port-overloading-factor {{ config.port_options.overloading }};
+                    {% endif %}
+                }
+                {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if nat_translations.destination_nat.rule_sets is defined %}
+            {% for rule_set, rule_config in nat_translations.destination_nat.rule_sets.items() %}
+            rule-set {{ rule_set }} {
+                {% if rule_config.from_zone is defined %}
+                {% if rule_config.from_zone is string %}
+                from zone {{ rule_config.from_zone }};
+                {% else %}
+                from zone [ {{ rule_config.from_zone|join(" ") }} ];
+                {% endif %}{% endif %}
+                {% if rule_config.to_interface is defined %}
+                interface {{ rule_config.to_interface }};
+                {% endif %}
+                {% if rule_config.rules is defined %}
+                {% for rule, cfg in rule_config.rules.items() %}
+                rule {{ rule }} {
+                    match {
+                        {% if cfg.src_add is defined and cfg.src_add is string %}
+                        source-address {{ cfg.src_add }};
+                        {% elif cfg.src_add is defined and cfg.src_add is not string %}
+                        source-address [ {{ cfg.src_add|join(" ") }} ];
+                        {% endif %}
+                        {% if cfg.src_add_name is defined %}
+                        source-address-name {{ cfg.src_add_name }};
+                        {% endif %}
+                        {% if cfg.dst_add is defined %}
+                        destination-address {{ cfg.dst_add }};
+                        {% endif %}
+                        {% if cfg.dst_add_name is defined %}
+                        destination-address-name {{ cfg.dst_add_name }};
+                        {% endif %}
+                        {% if cfg.dest_port is defined or cfg.dest_port_range is defined or cfg.protocol is defined %}
+                        {% if cfg.protocol is defined %}
+                        protocol {{ cfg.protocol }};
+                        {% endif %}
+                        {% if cfg.dest_port is defined %}
+                        destination-port {
+                            {% if cfg.dest_port is number %}
+                            {{ cfg.dest_port }};
+                            {% else %}
+                            {% for port in cfg.dest_port %}
+                            {{ port }};
+                            {% endfor %}
+                            {% endif %}
+                        }
+                        {% endif %}
+                        {% if cfg.dest_port is defined %}
+                        destination-port {
+                            {% if cfg.dest_port_range is number %}
+                            {{ cfg.dest_port_range[0] }} to {{ cfg.dest_port_range[1] }};
+                            {% endif %}
+                        }
+                        {% endif %}
+                        {% else %}
+                        {% if cfg.application is defined and cfg.application is string %}
+                        application {{ cfg.application }};
+                        {% elif cfg.application  is defined and cfg.application is not string %}
+                        application [ {{ cfg.application|join(" ") }} ];
+                        {% endif %}
+                        {% endif %}
+
+                    }
+                    then {
+                        destination-nat {
+                            {% if cfg.nat_off is defined %}
+                            {% if cfg.nat_off == True %}
+                            off;
+                            {% endif %}{% endif %}
+                            {% if cfg.nat_pool is defined %}
+                            pool {
+                                {{ cfg.nat_pool }};
+                            }
+                            {% endif %}
+                        }
+                    }
+                }
+                {% endfor %}
+                {% endif %}
+            }
+            {% endfor %}
+            {% endif %}
+        }
+        {% endif %}
+    }
+}
+{% endif %}
+{% endif %}

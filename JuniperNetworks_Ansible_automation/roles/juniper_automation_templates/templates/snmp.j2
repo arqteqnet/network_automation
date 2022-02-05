@@ -1,0 +1,45 @@
+snmp {
+    {% if hostname is defined %}
+    name {{ hostname }};
+    {% endif %}
+    {% if snmp.description is defined %}
+    description "{{ snmp.description }}";
+    {% endif %}
+    {% if snmp.location is defined %}
+    location "{{ snmp.location }}";
+    {% endif %}
+    {% if snmp.contact is defined %}
+    contact "{{ snmp.contact }}";
+    {% endif %}
+    {% if snmp.interface is defined %}
+    interface {{ snmp.interface }};
+    {% endif %}
+    filter-duplicates;
+    engine-id {
+        use-default-ip-address;
+    }
+    view snmpview1 {
+        oid internet include;
+    }
+    {% if snmp.community_lists is defined %}
+    {% for list, config in snmp.community_lists.items() %}
+    client-list {{ list }} {
+      {% for host in config %}
+        {{ host }};
+      {% endfor %}
+    }
+    {% endfor %}{% endif %}
+    {% if snmp.community is defined %}
+    {% for comm, details in snmp.community.items() %}
+    community {{ comm }} {
+        client-list-name {{ details.community_lists }}
+        view snmpview1;
+        authorization read-only;
+    }
+    {% endfor %}{% endif %}
+    trap-options {
+        source-address {{ mgmt.ip }};
+    }
+    routing-instance-access;
+    health-monitor;
+}

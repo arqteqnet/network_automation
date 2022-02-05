@@ -1,0 +1,29 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if archival_common is defined %}
+{% if archival_common.ssh_hosts is defined %}
+security {
+    {% for ssh_host in archival_common.ssh_hosts %}
+    ssh-known-hosts {
+        host {{ ssh_host.host }} {
+            {{ ssh_host.key_algorithm }} {{ ssh_host.ssh_public_key }};
+        }
+    }
+    {% endfor %}
+}
+{% endif %}
+{% if archival_common.archival is defined %}
+system {
+    archival {
+        configuration {
+            transfer-on-commit;
+            archive-sites {
+                {% for svr in archival_common.archival %}
+                "scp://{{ svr.username }}@{{ svr.server }}:{{ svr.tx_dir }}";
+                {% endfor %}
+            }
+        }
+    }
+}
+{% endif %}
+{% endif %}

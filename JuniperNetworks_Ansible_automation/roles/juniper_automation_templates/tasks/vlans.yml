@@ -1,0 +1,5 @@
+---
+- name: common vlans settings
+  template:
+    src: vlans.j2
+    dest: "{{ config_assemble_build }}/vlans.conf"

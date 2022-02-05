@@ -1,0 +1,6 @@
+---
+- name: route settings
+  template:
+    src: routes.j2
+    dest: "{{ config_assemble_build }}/routes.conf"
+

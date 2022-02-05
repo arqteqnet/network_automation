@@ -1,0 +1,86 @@
+PLAY [Generate, Assemble and Config to Juniper devices, default with no action] *********************************
+
+TASK [config_setup_commit : confirm or create device config directory] ******************************************
+ok: [dc0_sfw]
+
+TASK [config_setup_commit : Check if config file exists] ********************************************************
+ok: [dc0_sfw]
+
+TASK [config_setup_commit : remove templated config from previous build if exists] ******************************
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+     "path": "config/dc0_sfw/all_config.conf",
+-    "state": "file"
++    "state": "absent"
+ }
+
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : delete previous build directory] ****************************************************
+--- before
++++ after
+@@ -1,10 +1,4 @@
+ {
+     "path": "config/dc0_sfw/build",
+-    "path_content": {
+-        "directories": [],
+-        "files": [
+-            "config/dc0_sfw/build/groups.conf"
+-        ]
+-    },
+-    "state": "directory"
++    "state": "absent"
+ }
+
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : create build directory] *************************************************************
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+     "path": "config/dc0_sfw/build",
+-    "state": "absent"
++    "state": "directory"
+ }
+
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : get device facts] *******************************************************************
+ok: [dc0_sfw]
+.
+.
+.
+TASK [assemble config fragments and perform Diff of Config Merge] ***********************************************
+changed: [dc0_sfw]
+
+RUNNING HANDLER [config_setup_commit : Merge Diff] **************************************************************
+
+[edit system login]
++    user myuser {
++        full-name myuser;
++        uid 1999;
++        class super-user-local;
++        authentication {
++            encrypted-password "secrets"; ## SECRET-DATA
++            ssh-rsa "secrets"; ## SECRET-DATA
++        }
++    }
+changed: [dc0_sfw]
+
+RUNNING HANDLER [config_setup_commit : delete generated config file] ********************************************
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+     "path": "config/dc0_sfw/all_config.conf",
+-    "state": "file"
++    "state": "absent"
+ }
+
+changed: [dc0_sfw]
+
+PLAY RECAP ******************************************************************************************************
+dc0_sfw                : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0 

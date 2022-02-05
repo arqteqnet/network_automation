@@ -1,0 +1,81 @@
+---
+
+filters_v4_public:
+  PUBLIC_V4_FILTERING:
+    UNICAST_EGRESS:
+      from:
+        source_prefix_list:
+          - EXAMPLE_UNICAST_IPV4
+      then:
+        terminate_action: accept
+    ANYCAST_EGRESS:
+      from:
+        source_prefix_list:
+          - EXAMPLE_UNICAST_IPV4
+      then:
+        terminate_action: accept
+    EXAMPLE_OWNED_IP:
+      from:
+        source_prefix_list:
+          - EXAMPLE_IPV4
+        destination_prefix_list:
+          - EXAMPLE_IPV4
+      then:
+        terminate_action: accept
+    ANYCAST_PUBLIC_SERVICES_ICMP:
+      from:
+        destination_prefix_list:
+          - EXAMPLE_IPV4
+        icmp_type:
+          - echo-request
+        protocol: icmp
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    TRACEROUTE_ICMP:
+      from:
+        destination_prefix_list:
+          - EXAMPLE_UNICAST_IPV4
+        icmp_type:
+          - echo-request
+          - time-exceeded
+          - timestamp
+        protocol: icmp
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    TRACEROUTE_TCP:
+      from:
+        destination_prefix_list:
+          - EXAMPLE_UNICAST_IPV4
+        protocol: tcp
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    TRACEROUTE_UDP:
+      from:
+        destination_port: 33434-33523
+        destination_prefix_list:
+          - EXAMPLE_UNICAST_IPV4
+        protocol: udp
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    DENY_ELSE_UNICAST_ANYCAST:
+      from:
+        destination_prefix_list:
+          - EXAMPLE_UNICAST_IPV4
+      then:
+        actions:
+          - log
+        terminate_action: discard
+    ACCEPT:
+      then:
+        terminate_action: accept
+
+prefix_lists_public:
+    EXAMPLE_UNICAST_IPV4:
+        - 1.1.10.0/24
+        - 1.1.11.0/24
+    EXAMPLE_IPV4:
+        - 10.10.8.0/22

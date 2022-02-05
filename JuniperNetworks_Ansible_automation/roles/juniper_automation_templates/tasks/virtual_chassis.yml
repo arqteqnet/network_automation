@@ -1,0 +1,5 @@
+---
+- name: virtual chassis settings
+  template:
+    src: virtual_chassis.j2
+    dest: "{{ config_assemble_build }}/virtual_chassis.conf"

@@ -1,0 +1,6 @@
+---
+- name: policer settings
+  template:
+    src: policers.j2
+    dest: "{{ config_assemble_build }}/policer.conf"
+

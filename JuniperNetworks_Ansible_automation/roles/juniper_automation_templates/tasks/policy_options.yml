@@ -1,0 +1,6 @@
+---
+- name: policy_options settings
+  template:
+    src: policy_options.j2
+    dest: "{{ config_assemble_build }}/policy_options.conf"
+

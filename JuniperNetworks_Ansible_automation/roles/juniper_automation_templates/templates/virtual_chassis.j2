@@ -1,0 +1,41 @@
+#jinja2:lstrip_blocks:True
+{% set model = junos.model | lower %}
+{% set personality = junos.personality | lower %}
+{% if personality == "switch" %}
+{% if virtual_chassis is defined %}
+virtual-chassis {
+    {% if virtual_chassis.auto_update_software is defined and virtual_chassis.auto_update_software == True %}
+    auto-sw-update;
+    {% endif %}
+    {% if virtual_chassis.preprovisioned is defined and virtual_chassis.preprovisioned == True %}
+    preprovisioned;
+    {% endif %}
+    {% if virtual_chassis.no_split_detection is defined %}
+    {% if virtual_chassis.members|length <= 2 %}
+    no-split-detection;
+    {% endif %}{% endif %}
+    {% for config in virtual_chassis.members %}
+    member {{ config.member }} {
+        {% if config.master_priority is defined %}
+        {% if virtual_chassis.preprovisioned is defined and virtual_chassis.preprovisioned != True %}
+        mastership-priority {{ config.master_priority }};
+        {% endif %}{% endif %}
+        {% if virtual_chassis.preprovisioned is defined and virtual_chassis.preprovisioned == True %}
+        {% if config.role is defined %}
+        role {{ config.role }};
+        {% endif %}
+        {% if config.serial_number is defined %}
+        serial-number {{ config.serial_number }};
+        {% endif %}
+    }
+    {% if config.alias is defined %}
+    aliases {
+        serial-number {{ config.serial_number }} {
+            alias-name {{ config.alias }};
+        }
+    }
+    {% endif %}{% endif %}
+    {% endfor %}
+}
+{% endif %}
+{% endif %}

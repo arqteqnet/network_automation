@@ -1,0 +1,54 @@
+#jinja2:lstrip_blocks:True
+{% if dhcp_server is defined %}
+{% for pool, config in dhcp_server.items() %}
+{% if config.interface is defined %}
+system {
+    services {
+        dhcp-local-server {
+            group {{ pool }} {
+                interface {{ config.interface }};
+            }
+        }
+    }
+}
+{% endif %}
+{% endfor %}
+access {
+    address-assignment {
+        {% for pool, config in dhcp_server.items() %}
+        pool {{ pool }} {
+            {% if config.ipv4 is defined %}
+            family inet {
+                network {{ config.ipv4.network }};
+                {% for range in config.ipv4.range %}
+                range {{ range.name }} {
+                    low {{ range.low }};
+                    high {{ range.high }};
+                }
+                {% endfor %}
+                {% if config.ipv4.dhcp_attributes is defined %}
+                dhcp-attributes {
+                    {% if config.ipv4.dhcp_attributes.max_lease_time is defined %}
+                    maximum-lease-time {{ config.ipv4.dhcp_attributes.max_lease_time }};
+                    {% endif %}
+                    {% if config.ipv4.dhcp_attributes.name_servers is defined %}
+                    name-server {
+                        {% for ns in config.ipv4.dhcp_attributes.name_servers %}
+                        {{ ns }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if config.ipv4.dhcp_attributes.router is defined %}
+                    router {
+                        {{ config.ipv4.dhcp_attributes.router }};
+                    }
+                    {% endif %}
+                }
+                {% endif %}
+            }
+            {% endif %}
+        }
+        {% endfor %}
+    }
+}
+{% endif %}

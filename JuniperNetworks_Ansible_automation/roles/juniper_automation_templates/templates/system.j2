@@ -1,0 +1,254 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if security is defined %}
+security {
+    {% if security.security_logs is defined %}
+    log {
+        {% if security.security_logs.syslog_stream is defined %}
+        mode stream;
+        {% if security.security_logs.syslog_stream.src is defined %}
+        source-address {{mgmt.ip }};
+        {% endif %}
+        {% if security.security_logs.syslog_stream.profile is defined %}
+        stream {{ security.security_logs.syslog_stream.profile.name }} {
+            {% if  security.security_logs.syslog_stream.profile.format is defined %}
+            format {{ security.security_logs.syslog_stream.profile.format }};
+            {% else %}
+            format sd-syslog;
+            {% endif %}
+            {% if security.security_logs.syslog_stream.profile.category is defined %}
+            category {{ security.security_logs.syslog_stream.profile.category }};
+            {% else %}
+            category all;
+            {% endif %}
+            {% if security.security_logs.syslog_stream.host is defined %}
+            host {
+                {{ security.security_logs.syslog_stream.host }};
+                port {{ security.security_logs.syslog_stream.port }};
+            }
+            {% else %}
+            host {
+                {{ syslog }};
+                port 514;
+            }
+            {% endif %}
+        }
+        {% endif %}{% endif %}
+        {% if security.security_logs.binary is defined %}
+        utc-timestamp;
+        mode event;
+        format binary;
+        {% if security.security_logs.binary.files is defined %}
+        file {
+            size {{ security.security_logs.binary.size }};
+            files {{ security.security_logs.binary.files }};
+        }
+        {% else %}
+        file {
+            size 10;
+            files 10;
+        }
+        {% endif %}{% endif %}
+    }
+    {% endif %}
+    {% if security.forwarding_options is defined %}
+    forwarding-options {
+        {% if security.forwarding_options.ip_v6 is defined %}
+        family {
+            inet6 {
+                mode {{ security.forwarding_options.ip_v6.mode }};
+            }
+        }
+    {% endif %}
+    }
+    {% endif %}
+}
+{% endif %}
+system {
+    {% if hostname is defined %}
+    host-name {{ hostname }};
+    {% endif %}
+    auto-snapshot;
+    {% if system.default_address_selection is defined and system.default_address_selection is true %}
+    default-address-selection;
+    {% endif %}
+    {% if system.backup_router is defined %}
+    {% if system.backup_router.routes is string or config.system.backup_router.routes is number %}
+    backup-router {{ system.backup_router.gateway }} destination {{ config.system.backup_router.routes }};
+    {% else %}
+    backup-router {{ system.backup_router.gateway }} destination [ {{ config.system.backup_router.routes|join (" ") }} ];
+    {% endif %}{% endif %}
+    time-zone UTC;
+    no-multicast-echo;
+    no-redirects;
+    no-ping-record-route;
+    no-ping-time-stamp;
+    internet-options {
+        icmpv4-rate-limit packet-rate 100 bucket-size 5;
+        icmpv6-rate-limit packet-rate 100 bucket-size 5;
+        no-source-quench;
+        tcp-drop-synfin-set;
+    }
+    ports {
+        console log-out-on-disconnect;
+        auxiliary disable;
+    }
+    root-authentication {
+        encrypted-password {{ system.root_password }}; ## SECRET-DATA
+    }
+    replace:
+    {% if system is defined or system_common is defined %}
+    {% if system.name_servers is defined %}
+    name-server {
+      {% for ns in system.name_servers %}
+        {{ ns }};
+      {% endfor %}
+    }
+    {% elif system_common.name_servers is defined %}
+    name-server {
+      {% for ns in system_common.name_servers %}
+        {{ ns }};
+      {% endfor %}
+    }
+    {% endif %}{% endif %}
+    login {
+        retry-options {
+            tries-before-disconnect 5;
+            backoff-threshold 3;
+            backoff-factor 10;
+            lockout-period 4;
+        }
+        class {{ custom_user_class }} {
+            permissions {{ custom_class_perms }};
+        }
+        {% for user in users %}
+        user {{ user.username }} {
+            {% if user.fullname is defined %}
+            full-name "{{ user.fullname }}";
+            {% endif %}
+            {% if user.uid is defined %}
+            uid {{ user.uid }};
+            {% endif %}
+            class {{ custom_user_class }};
+            authentication {
+                {% if user.password is defined %}
+                encrypted-password "{{ user.password }}"; ## SECRET-DATA
+                {% endif %}
+                {% if user.ssh_key is defined %}
+                ssh-rsa "{{ user.ssh_key }}"; ## SECRET-DATA
+                {% endif %}
+            }
+        }
+        {% endfor %}
+    }
+    {% if system_common.syslog is defined or syslog_common is defined %}
+    syslog {
+        archive files 5;
+        user * {
+            any emergency;
+        }
+        {% if syslog_common.syslog.external_syslog is defined %}
+        host {{ syslog_common.syslog.external_syslog.host }} {
+            any any;
+            port {{ syslog_common.syslog.external_syslog.port }};
+            structured-data;
+        }
+        {% endif %}
+        {% if syslog_common.syslog.files is defined %}
+        {% for name, config in syslog_common.syslog.files.items() %}
+        file {{ name }} {
+            {% if config.facility is defined %}
+            {% for sys_file in config.facility %}
+            {{ sys_file.name }} {{ sys_file.log_level }};
+            {% if sys_file.matching is defined %}
+            match {{ sys_file.matching }};
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if config.explicit is defined %}
+            {% if config.explicit == True %}
+            explicit-priority;
+            {% endif %}{% endif %}
+        }
+        {% endfor %}
+        {% endif %}
+        {% if system_firewall is defined %}
+        {% for name, config in system_firewall.syslog.files.items() %}
+        file {{ name }} {
+            {% if config.facility is defined %}
+            {% for sys_file in config.facility %}
+            {{ sys_file.name }} {{ sys_file.log_level }};
+            {% if sys_file.archive_size is defined %}
+            archive size {{ sys_file.archive_size }};
+            {% endif %}
+            {% if sys_file.matching is defined %}
+            match {{ sys_file.matching }};
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% if config.explicit is defined %}
+            {% if config.explicit == True %}
+            explicit-priority;
+            {% endif %}{% endif %}
+        }
+        {% endfor %}
+        {% endif %}
+        source-address {{mgmt.ip }};
+    }
+    {% endif %}
+    services {
+        delete: ftp;
+        delete: telnet;
+        delete: web-management;
+        ssh {
+            root-login deny;
+            protocol-version v2;
+            connection-limit 5;
+            rate-limit 4;
+        }
+    {% if system.max_config_flash is defined %}
+    max-configurations-on-flash {{ system.max_config_flash }};
+    {% endif %}
+    {% if system.max_config_rollback is defined %}
+    max-configuration-rollbacks {{ system.max_config_rollback }};
+    {% endif %}
+        netconf {
+            ssh {
+                port {{ system.netconf_port }};
+            }
+        }
+    }
+    {% if system.archival is defined %}
+    archival {
+        configuration {
+            transfer-on-commit;
+            {% if system.archival is string or  system.archival is number %}
+            archive-sites {
+                "scp://{{system.archival.hostname}}@{{ system.archival.server }}:{{ system.archival.tx_dir }}";
+            }
+            {% else %}
+            archive-sites {
+                {% for svr in system.archival %}
+                "scp://{{ svr.username }}@{{ svr.server }}:{{ svr.tx_dir }}";
+                {% endfor %}
+            }
+            {% endif %}
+        }
+    }
+    {% endif %}
+    commit synchronize;
+    {% if system is defined or system_common is defined %}
+    {% if system.ntp_servers is defined %}
+    ntp {
+      {% for ntp in system.ntp_servers %}
+        server {{ ntp }};
+      {% endfor %}
+    }
+    {% elif system_common.ntp_servers is defined %}
+    ntp {
+      {% for ntp in system_common.ntp_servers %}
+        server {{ ntp }};
+      {% endfor %}
+    }
+    {% endif %}{% endif %}
+}

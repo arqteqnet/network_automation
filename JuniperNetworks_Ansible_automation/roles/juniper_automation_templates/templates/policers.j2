@@ -1,0 +1,20 @@
+#jinja2:lstrip_blocks:True
+{% if policers is defined %}
+firewall {
+    {% for policer, config in policers.items() %}
+    policer {{ policer }} {
+        if-exceeding {
+            {% if config.bandwidth_limit is defined %}
+            bandwidth-limit {{ config.bandwidth_limit }};
+            {% endif %}
+            {% if config.burst_limit %}
+            burst-size-limit {{ config.burst_limit }};
+            {% endif %}
+        }
+        {% if config.terminate_action is defined %}
+        then discard;
+        {% endif %}
+    }
+    {% endfor %}
+}
+{% endif %}

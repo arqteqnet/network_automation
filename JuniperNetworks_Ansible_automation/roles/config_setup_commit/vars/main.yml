@@ -1,0 +1,11 @@
+---
+commit_timeout: 120
+commit_confirm: 5
+config_assemble: "config/{{ inventory_hostname }}"
+config_assemble_build: "config/{{ inventory_hostname }}/build"
+config_file: "{{ config_assemble }}/{{ file_name }}.conf"
+connection_settings:
+  host: "{{ ansible_host }}"
+  user: "{{ vars_prompt_username }}"
+  timeout: "{{ commit_timeout }}"
+

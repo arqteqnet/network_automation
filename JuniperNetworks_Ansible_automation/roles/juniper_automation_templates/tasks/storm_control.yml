@@ -1,0 +1,5 @@
+---
+- name: storm control settings
+  template:
+    src: storm_control.j2
+    dest: "{{ config_assemble_build }}/storm_control.conf"

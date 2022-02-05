@@ -1,0 +1,77 @@
+
+PLAY [Generate, Assemble and Config to Juniper devices, default with no action] **********************
+
+TASK [config_setup_commit : confirm or create device config directory] *******************************
+ok: [dc0_sfw]
+
+TASK [config_setup_commit : Check if config file exists] *********************************************
+ok: [dc0_sfw]
+
+TASK [config_setup_commit : remove templated config from previous build if exists] *******************
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : delete previous build directory] *****************************************
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : create build directory] **************************************************
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : get device facts] ********************************************************
+ok: [dc0_sfw]
+
+TASK [juniper_automtion_templates : group settings] **************************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : common system settings] ******************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : common snmp settings] ********************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : group settings] **************************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : nat translation settings] ****************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : chassis settings] ************************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : common vlans settings] *******************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : layer 2 protocol settings] ***************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : forwarding_options settings] *************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : filter settings] *************************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : route settings] **************************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : prefix_list settings] ********************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : policer settings] ************************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : application settings] ********************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : security zone settings] ******************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : security policy settings] ****************************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : firewall address book settings] **********************************
+changed: [dc0_sfw]
+
+TASK [juniper_automtion_templates : policy_options settings] *****************************************
+changed: [dc0_sfw]
+
+PLAY RECAP *******************************************************************************************
+dc0_sfw                : ok=24   changed=21   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0

@@ -1,0 +1,5 @@
+---
+- name: common archival settings
+  template:
+    src: archival.j2
+    dest: "{{ config_assemble_build }}/archival.conf"

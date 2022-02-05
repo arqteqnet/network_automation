@@ -1,0 +1,5 @@
+---
+- name: firewall address book settings
+  template:
+    src: address_entries.j2
+    dest: "{{ config_assemble_build }}/address_entries.conf"

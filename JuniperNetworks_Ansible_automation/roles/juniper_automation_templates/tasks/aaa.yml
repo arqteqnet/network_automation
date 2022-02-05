@@ -1,0 +1,5 @@
+---
+- name: common 802.1x settings
+  template:
+    src: aaa.j2
+    dest: "{{ config_assemble_build }}/aaa.conf"

@@ -1,0 +1,5 @@
+---
+- name: common system settings
+  template:
+    src: system.j2
+    dest: "{{ config_assemble_build }}/system.conf"

@@ -1,0 +1,5 @@
+---
+- name: common snmp settings
+  template:
+    src: snmp.j2
+    dest: "{{ config_assemble_build }}/snmp.conf"

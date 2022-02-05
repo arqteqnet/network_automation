@@ -1,0 +1,32 @@
+---
+- name: confirm or create device config directory
+  file:
+    path: "{{ config_assemble }}"
+    state: directory
+
+- name: Check if config file exists
+  stat:
+    path: "{{ config_file }}"
+  register: config_exists
+
+- name: remove templated config from previous build if exists
+  file:
+    path: "{{ config_file }}"
+    state: absent
+  when: config_exists.stat.exists
+
+
+- name: delete previous build directory
+  file:
+    path: "{{ config_assemble_build }}"
+    state: absent
+
+- name: create build directory
+  file:
+    path: "{{ config_assemble_build }}"
+    state: directory
+
+- name: get device facts
+  juniper_junos_facts:
+    provider: "{{ connection_settings }}"
+  register: junos_facts

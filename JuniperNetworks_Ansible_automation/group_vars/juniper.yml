@@ -1,0 +1,276 @@
+---
+
+custom_user_class: super-user-local
+custom_class_perms: all
+
+users:
+  - username: user1
+    fullname: User1
+    uid: 1000
+    password: "{{ lookup('hashi_vault','secret=networking/data/user_secrets/passwords:user1') }}"
+    ssh_key: "{{ lookup('hashi_vault','secret=networking/data/user_secrets/ssh_keys:user1') }}"
+  - username: user2
+    fullname: User2
+    uid: 1001
+    password: "{{ lookup('hashi_vault','secret=networking/data/user_secrets/passwords:user2') }}"
+    ssh_key: "{{ lookup('hashi_vault','secret=networking/data/user_secrets/ssh_keys:user2') }}"
+
+archival_common:
+    ssh_hosts:
+        - host: "{{ lookup('dig', 'backup0.infra.mgmt.example.com) }}"
+          key_algorithm: ecdsa-sha2-nistp256-key
+          ssh_public_key: "{{ lookup('hashi_vault','secret=networking/data/system_secrets/ssh_keys:backup0.infra.mgmt.example.com') }}"
+        - host: "{{ lookup('dig', 'backup1.infra.mgmt.example.com) }}"
+          key_algorithm: ecdsa-sha2-nistp256-key
+          ssh_public_key: "{{ lookup('hashi_vault','secret=networking/data/system_secrets/ssh_keys:backup1.infra.mgmt.example.com') }}"
+    archival:
+        - server: "{{ lookup('dig', 'backup0.infra.mgmt.example.com') }}"
+          username: "{{ lookup('hashi_vault','secret=networking/data/system_secrets/archival:dc1_username') }}"
+          tx_dir: "{{ lookup('hashi_vault','secret=networking/data/system_secrets/archival:dc1_remote_dir') }}"
+
+filters_v4_common:
+  CPP:
+    FRAGEMENT:
+      from:
+        non_prefix:
+          - is-fragment
+      then:
+        terminate_action: discard
+    LOOPBACK:
+      from:
+        source_prefix_list:
+          - LOOPBACK-IPV4
+      then:
+        terminate_action: accept
+    BFD:
+      from:
+        destination_port:
+          - 3784-3785
+        destination_prefix_list:
+          - ROUTER-IPV4
+        protocol: udp
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    BGP_IPV4_IN:
+      from:
+        destination_port:
+          - 179
+        protcol: tcp
+        source_prefix_list:
+          - BGP-IPV4
+      then:
+        terminate_action: accept
+    BGP_IPV4_OUT:
+      from:
+        protcol: tcp
+        source_port:
+          - 179
+        source_prefix_list:
+          - BGP-IPV4
+      then:
+        terminate_action: accept
+    DNS:
+      from:
+        destination_prefix_list:
+          - ROUTER-IPV4
+        protcol: udp
+        source_port: domain
+        source_prefix_list:
+          - DNS-SERVERS
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    ICMP:
+      from:
+        destination_prefix_list:
+          - ROUTER-IPV4
+        icmp_type:
+          - echo-request
+          - echo-reply
+          - time-exceeded
+          - unreachable
+        protocol: icmp
+      then:
+        policer: limit-100k
+        terminate_action: accept
+    ICMP-ELSE:
+      from:
+        protocol: icmp
+      then:
+        terminate_action: discard
+
+    NETCONF:
+      from:
+        destination_port: 830
+        protcol: tcp
+        source_prefix_list:
+          - MANAGEMENT-HOSTS
+      then:
+        policer: limit-10m
+        terminate_action: accept
+    NTP:
+      from:
+        destination_prefix_list:
+          - ROUTER-IPV4
+        protcol: udp
+        source_port: ntp
+        source_prefix_list:
+          - NTP-SERVERS
+          - NTP-SOURCE
+      then:
+        terminate_action: accept
+    OSPF-IPV4:
+      from:
+        destination_prefix_list:
+          - ROUTER-IPV4
+          - OSPF-IPV4
+        protocol: ospf
+        source_prefix_list:
+          - ROUTER-IPV4
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    SNMP:
+      from:
+        destination_port: snmp
+        destination_prefix_list:
+          - ROUTER-IPV4
+        protcol: udp
+        source_prefix_list:
+          - SNMP-SERVERS
+          - SNMP-CLIENT-LISTS
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    SSH:
+      from:
+        destination_port: ssh
+        protcol: tcp
+        source_prefix_list:
+          - MANAGEMENT-HOSTS
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    ARCHIVAL:
+      from:
+        source_port: ssh
+        protcol: tcp
+        source_prefix_list:
+          - ARCHIVAL-SERVERS
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    TRACEROUTE_ICMP:
+      from:
+        destination_prefix_list:
+          - ROUTER-IPV4
+        icmp_type:
+          - echo-request
+          - time-exceeded
+          - timestamp
+        protocol: icmp
+        ttl: 1
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    TRACEROUTE_TCP:
+      from:
+        destination_prefix_list:
+          - ROUTER-IPV4
+        protocol: tcp
+        ttl: 1
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    TRACEROUTE_UDP:
+      from:
+        destination_port: 33434-33523
+        destination_prefix_list:
+          - ROUTER-IPV4
+        protocol: udp
+        ttl: 1
+      then:
+        policer: limit-1m
+        terminate_action: accept
+    DEFAUT_DENY:
+      then:
+        actions:
+          - log
+          - syslog
+        terminate_action: discard
+
+
+
+prefix_lists_v4_common:
+    BGP-IPV4: apply-path "protocols bgp group <*> neighbor <*.*.*.*>"
+    NTP-SERVERS: apply-path "system ntp server <*.*.*.*>"
+    ARCHIVAL-SERVERS:
+        - "{{ lookup('dig', 'backup0.infra.mgmt.example.com') }}"
+        - "{{ lookup('dig', 'backup1.infra.mgmt.example.com') }}"
+    LOOPBACK-IPV4: apply-path "interfaces lo0 unit 0 family inet address <*.*.*.*>"
+    BGP-IPV6: apply-path "protocols bgp group <*v6> neighbor <*>"
+    NTP-SOURCE: apply-path "system ntp source-address <*.*.*.*>"
+    SNMP-SERVERS: apply-path "snmp client-list <*> <*.*.*.*>"
+    SNMP-CLIENT-LISTS: apply-path "snmp community <*> clients <*>"
+    DNS-SERVERS: apply-path "system name-server <*.*.*.*>"
+    ROUTER-IPV6: apply-path "interfaces <*> unit <*> family inet6 address <*>"
+    LOOPBACK-IPV6: apply-path "interfaces lo0 unit 0 family inet6 address <*>"
+    GRE-IPV4: apply-path "interfaces gr-0/0/0 unit <*> family inet address <*.*.*.*>"
+    OSPF-IPV4:
+        - 224.0.0.5/32
+        - 224.0.0.6/32
+    ROUTER-IPV4: apply-path "interfaces <*> unit <*> family inet address <*>"
+    VPN:
+        - 11.1.1.1/32
+
+policers:
+    limit-100k:
+        bandwidth_limit: 100k
+        burst_limit: 15k
+        terminate_action: discard
+    limit-1m:
+        bandwidth_limit: 1m
+        burst_limit: 15k
+        terminate_action: discard
+    limit-3m:
+        bandwidth_limit: 3m
+        burst_limit: 15k
+        terminate_action: discard
+    limit-10m:
+        bandwidth_limit: 10m
+        burst_limit: 625k
+        terminate_action: discard
+
+#facility name possibiities [any authorization daemon dfc explicit-priority external firewall ftp interactive-commands kernel ntp pfe secuity user]
+#log_level [ alert any critical emergency error info none warning notice ]
+l2_protocols_common:
+  lldp:
+    iface_enabled: all
+
+syslog_common:
+  syslog:
+    files:
+      authorization:
+        facility:
+          - log_level: any
+            name: authorization
+      interactive-commands:
+        facility:
+          - log_level: any
+            name: interactive-commands
+      kernel:
+        facility:
+          - log_level: warning
+            name: kernel
+      messages:
+        explicit: true
+        facility:
+          - log_level: notice
+            name: any
+          - log_level: error
+            name: daemon
+      pfe:
+        facility:
+          - log_level: warning
+            name: pfe

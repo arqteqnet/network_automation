@@ -1,0 +1,6 @@
+---
+- name: layer 2 protocol settings
+  template:
+    src: l2_protocols.j2
+    dest: "{{ config_assemble_build }}/l2_protocols.conf"
+

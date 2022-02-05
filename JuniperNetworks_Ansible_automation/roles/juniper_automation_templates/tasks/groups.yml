@@ -1,0 +1,5 @@
+---
+- name: group settings
+  template:
+    src: groups.j2
+    dest: "{{ config_assemble_build }}/groups.conf"

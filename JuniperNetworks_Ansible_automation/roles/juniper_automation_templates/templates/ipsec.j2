@@ -1,0 +1,299 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if "srx" in personality %}
+{% if ipsec_common is defined or ipsec is defined %}
+security {
+    {% if ipsec_common is defined %}
+    ike {
+        {% if ipsec_common.ike_proposals is defined %}
+        {% for proposal, config in ipsec_common.ike_proposals.items() %}
+        proposal {{ proposal }} {
+            {% if config.description is defined %}
+            description "{{ config.description }}";
+            {% endif %}
+            {% if config.auth_method is defined %}
+            authentication-method {{ config.auth_method }};
+            {% else %}
+            authentication-method pre-shared-keys;
+            {% endif %}
+            {% if config.dh_group is defined %}
+            dh-group {{ config.dh_group }};
+            {% else %}
+            dh-group group19;
+            {% endif %}
+            {% if config.auth_algorithm is defined %}
+            authentication-algorithm {{ config.auth_algorithm }};
+            {% else %}
+            authentication-algorithm sha-256;
+            {% endif %}
+            {% if config.enc_algorithm is defined %}
+            encryption-algorithm {{ config.enc_algorithm }};
+            {% else %}
+            encryption-algorithm aes-256-cbc;
+            {% endif %}
+            {% if config.lifetime_seconds is defined %}
+            lifetime-seconds {{ config.lifetime_seconds }};
+            {% else %}
+            lifetime-seconds 86400;
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if ipsec_common.ike_policy is defined %}
+        {% for policy, config in ipsec_common.ike_policy.items() %}
+        policy {{ policy }} {
+            {% if config.mode is defined %}
+            mode {{ config.mode }};
+            {% else %}
+            mode main;
+            {% endif %}
+            {% if config.proposals is defined %}
+            proposals {{ config.proposals }};
+            {% else %}
+            proposals EXAMPLE-SITES;
+            {% endif %}
+            {% if config.preshare_key is defined %}
+            pre-shared-key ascii-text "{{ config.preshare_key }}"; ## SECRET-DATA
+            {% endif %}
+        }
+    {% endfor %}{% endif %}
+    }
+    ipsec {
+        {% if ipsec_common.ipsec_proposals is defined %}
+        {% for proposal, config in ipsec_common.ipsec_proposals.items() %}
+        proposal {{ proposal }} {
+            {% if config.protocol is defined %}
+            protocol {{ config.protocol }};
+            {% else %}
+            protocol esp;
+            {% endif %}
+            {% if config.auth_algorithm is defined %}
+            authentication-algorithm {{ config.auth_algorithm }};
+            {% else %}
+            authentication-algorithm hmac-sha-256-128;
+            {% endif %}
+            {% if config.enc_algorithm is defined %}
+            encryption-algorithm {{ config.enc_algorithm }};
+            {% else %}
+            encryption-algorithm aes-256-cbc;
+            {% endif %}
+            {% if config.life_time is defined %}
+            lifetime-seconds {{ config.life_time }};
+            {% else %}
+            lifetime-seconds 3600;
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if ipsec_common.ipsec_policy is defined %}
+        {% for policy, config in ipsec_common.ipsec_policy.items() %}
+        policy {{ policy }} {
+            perfect-forward-secrecy {
+                {% if config.secret_forward_dh is defined %}
+                keys group2;
+                {% else %}
+                keys group2;
+                {% endif %}
+            }
+            {% if config.proposals is defined %}
+            proposals {{ config.proposals }};
+            {% else %}
+            proposals EXAMPLE-SITES;
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if ipsec_common.ipsec_vpn is defined %}
+        {% for vpn, config in ipsec_common.ipsec_vpn.items() %}
+        vpn {{ vpn }} {
+            {% if config.bind_interface is defined %}
+            bind-interface {{ config.bind_interface }};
+            {% endif %}
+            {% if config.df_clear is defined  and config.df_clear == True %}
+            df-bit clear;
+            {% endif %}
+            ike {
+                {% if config.ike_gateway is defined %}
+                gateway {{ config.ike_gateway }};
+                {% endif %}
+                {% if config.ipsec_policy is defined %}
+                ipsec-policy {{ config.ipsec_policy }};
+                {% else %}
+                ipsec-policy EXAMPLE-SITES;
+                {% endif %}
+            }
+        }
+        {% endfor %}{% endif %}
+    }
+    {% endif %}
+
+
+
+    {% if ipsec is defined %}
+    ike {
+        {% if ipsec.ike_proposals is defined %}
+        {% for proposal, config in ipsec.ike_proposals.items() %}
+        proposal {{ proposal }} {
+            {% if config.description is defined %}
+            description "{{ config.description }}";
+            {% endif %}
+            {% if config.auth_method is defined %}
+            authentication-method {{ config.auth_method }};
+            {% else %}
+            authentication-method pre-shared-keys;
+            {% endif %}
+            {% if config.dh_group is defined %}
+            dh-group {{ config.dh_group }};
+            {% else %}
+            dh-group group19;
+            {% endif %}
+            {% if config.auth_algorithm is defined %}
+            authentication-algorithm {{ config.auth_algorithm }};
+            {% else %}
+            authentication-algorithm sha-256;
+            {% endif %}
+            {% if config.enc_algorithm is defined %}
+            encryption-algorithm {{ config.enc_algorithm }};
+            {% else %}
+            encryption-algorithm aes-256-cbc;
+            {% endif %}
+            {% if config.lifetime_seconds is defined %}
+            lifetime-seconds {{ config.lifetime_seconds }};
+            {% else %}
+            lifetime-seconds 86400;
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if ipsec.ike_policy is defined %}
+        {% for policy, config in ipsec.ike_policy.items() %}
+        policy {{ policy }} {
+            {% if config.mode is defined %}
+            mode {{ config.mode }};
+            {% else %}
+            mode main;
+            {% endif %}
+            {% if config.proposals is defined %}
+            proposals {{ config.proposals }};
+            {% else %}
+            proposals EXAMPLE-SITES;
+            {% endif %}
+            {% if config.preshare_key is defined %}
+            pre-shared-key ascii-text "{{ config.preshare_key }}"; ## SECRET-DATA
+            {% endif %}
+            }
+        {% endfor %}{% endif %}
+
+        {% if ipsec.ike_gateway is defined %}
+        {% for gateway, config in ipsec.ike_gateway.items() %}
+        gateway {{ gateway }} {
+        ike-policy {{ config.ike_policy }};
+        {% if config.address is defined %}
+        address {{ config.address }};
+        {% endif %}
+        {% if config.dead_peer is defined %}
+        dead-peer-detection {
+            interval {{ config.dead_peer.interval }};
+            threshold {{ config.dead_peer.threshold }};
+        }
+        {% endif %}
+        {% if config.nat_traversal == False %}
+        no-nat-traversal;
+        {% endif %}
+
+        external-interface {{ config.external_interface }};
+        {% if config.local_address is defined %}
+        local-address {{ config.local_address }};
+        {% endif %}
+        {% if config.version is defined %}
+        version {{ config.version}};
+        {% else %}
+        version v2-only;
+        {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+    }
+    {% endif %}
+
+    ipsec {
+        {% if ipsec.ipsec_proposals is defined %}
+        {% for proposal, config in ipsec.ipsec_proposals.items() %}
+        proposal {{ proposal }} {
+            {% if config.protocol is defined %}
+            protocol {{ config.protocol }};
+            {% else %}
+            protocol esp;
+            {% endif %}
+            {% if config.auth_algorithm is defined %}
+            authentication-algorithm {{ config.auth_algorithm }};
+            {% else %}
+            authentication-algorithm hmac-sha-256-128;
+            {% endif %}
+            {% if config.enc_algorithm is defined %}
+            encryption-algorithm {{ config.enc_algorithm }};
+            {% else %}
+            encryption-algorithm aes-256-cbc;
+            {% endif %}
+            {% if config.life_time is defined %}
+            lifetime-seconds {{ config.life_time }};
+            {% else %}
+            lifetime-seconds 3600;
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if ipsec.ipsec_policy is defined %}
+        {% for policy, config in ipsec.ipsec_policy.items() %}
+        policy {{ policy }} {
+            perfect-forward-secrecy {
+                {% if config.secret_forward_dh is defined %}
+                keys group2;
+                {% else %}
+                keys group2;
+                {% endif %}
+            }
+            {% if config.proposals is defined %}
+            proposals {{ config.proposals }};
+            {% else %}
+            proposals EXAMPLE-SITES;
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if ipsec.ipsec_vpns is defined %}
+        {% for vpn, config in ipsec.ipsec_vpns.items() %}
+        vpn {{ vpn }} {
+            {% if config.bind_interface is defined %}
+            bind-interface {{ config.bind_interface }};
+            {% endif %}
+            {% if config.traffic_selectors is defined %}
+            {% for ts, config in config.traffic_selectors.items() %}
+            traffic-selector {{ ts }} {
+                local-ip {{ config.local_ip }};
+                remote-ip {{ config.remote_ip }};
+            }
+            {% endfor %}
+            {% endif %}
+            {% if config.df_clear is defined  and config.df_clear == True %}
+            df-bit clear;
+            {% endif %}
+            ike {
+                {% if config.ike_gateway is defined %}
+                gateway {{ config.ike_gateway }};
+                {% endif %}
+                {% if config.ipsec_policy is defined %}
+                ipsec-policy {{ config.ipsec_policy }};
+                {% else %}
+                ipsec-policy EXAMPLE-SITES;
+                {% endif %}
+            }
+            {% if config.establish_immediately is defined and config.establish_immediately == True %}
+            establish-tunnels immediately;
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+    }
+}
+{% endif %}
+{% endif %}

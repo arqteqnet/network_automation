@@ -1,0 +1,5 @@
+---
+- name: security policy settings
+  template:
+    src: security_policies.j2
+    dest: "{{ config_assemble_build }}/security_policies.conf"

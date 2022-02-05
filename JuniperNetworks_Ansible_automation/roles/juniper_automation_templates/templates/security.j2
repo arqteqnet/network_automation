@@ -1,0 +1,68 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if "srx" in personality %}
+{% if custom_applications_common is defined or custom_applications is defined %}
+applications {
+    {% if custom_applications_common is defined %}
+    {% for app, app_config in custom_applications_common.applications.items() %}
+    application {{ app }} {
+        {% if app_config.app_protocol is defined %}
+        application-protocol {{ app_config.app_protocol }};
+        {% endif %}
+        protocol {{ app_config.protocol }};
+        destination-port {{ app_config.dst_port }};
+    }
+    {% endfor %}
+    {% endif %}
+    {% if custom_applications is defined %}
+    {% for app, app_config in custom_applications.applications.items() %}
+    application {{ app }} {
+        {% if app_config.app_protocol is defined %}
+        application-protocol {{ app_config.app_protocol }};
+        {% endif %}
+        protocol {{ app_config.protocol }};
+        destination-port {{ app_config.dst_port }};
+    }
+    {% endfor %}
+    {% endif %}
+    {% if custom_applications_common.multi_term_app is defined %}
+    {% for app, dict in custom_applications_common.multi_term_app.items() %}
+    application {{ app }} {
+        {% for term, config in dict.items() %}
+        term {{ term }} protocol {{ config.protocol}} destination-port {{ config.dst_port }};
+        {% endfor %}
+    }
+    {% endfor %}
+    {% endif %}
+    {% if custom_applications.multi_term_app is defined %}
+    {% for app, dict in custom_applications.multi_term_app.items() %}
+    application {{ app }} {
+        {% for term, config in dict.items() %}
+        term {{ term }} protocol {{ config.protocol}} destination-port {{ config.dst_port }};
+        {% endfor %}
+    }
+    {% endfor %}
+    {% endif %}
+    {% if custom_applications_common.app_sets is defined %}
+    {% for app_set, apps in custom_applications_common.app_sets.items() %}
+    application-set {{ app_set }} {
+        {% for app in apps %}
+        application {{ app }};
+        {% endfor %}
+    }
+    {% endfor %}
+    {% endif %}
+    {% if custom_applications.app_sets is defined %}
+    {% for app_set, apps in custom_applications.app_sets.items() %}
+    application-set {{ app_set }} {
+        {% for app in apps %}
+        application {{ app }};
+        {% endfor %}
+    }
+    {% endfor %}
+    {% endif %}
+
+
+}
+{% endif %}
+{% endif %}

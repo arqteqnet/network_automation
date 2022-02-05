@@ -1,0 +1,218 @@
+PLAY [Generate, Assemble and Config to Juniper devices, default with no action] *********************************
+
+TASK [config_setup_commit : confirm or create device config directory] ******************************************
+ok: [dc0_sfw]
+
+TASK [config_setup_commit : Check if config file exists] ********************************************************
+ok: [dc0_sfw]
+
+TASK [config_setup_commit : remove templated config from previous build if exists] ******************************
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+     "path": "config/dc0_sfw/all_config.conf",
+-    "state": "file"
++    "state": "absent"
+ }
+
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : delete previous build directory] ****************************************************
+--- before
++++ after
+@@ -1,10 +1,4 @@
+ {
+     "path": "config/dc0_sfw/build",
+-    "path_content": {
+-        "directories": [],
+-        "files": [
+-            "config/dc0_sfw/build/groups.conf"
+-        ]
+-    },
+-    "state": "directory"
++    "state": "absent"
+ }
+
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : create build directory] *************************************************************
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+     "path": "config/dc0_sfw/build",
+-    "state": "absent"
++    "state": "directory"
+ }
+
+changed: [dc0_sfw]
+
+TASK [config_setup_commit : get device facts] *******************************************************************
+ok: [dc0_sfw]
+.
+.
+.
+TASK [assemble config fragments and perform Diff of Config Override] ***********************************************
+TASK [assemble config fragments and perform Diff of Config Merge] ***********************************************************
+changed: [dc0_sfw]
+
+RUNNING HANDLER [config_setup_commit : Override Diff] ***********************************************************************
+
+[edit system login]
++    user myuser {
++        full-name myuser;
++        uid 1999;
++        class super-user-local;
++        authentication {
++            encrypted-password "secret"; ## SECRET-DATA
++            ssh-rsa "secret"; ## SECRET-DATA
++        }
++    }
+[edit system syslog]
+!    file authorization { ... }
+!    file interactive-commands { ... }
+!    file kernel { ... }
+[edit security address-book global]
+     address MYHOST { ... }
++    address google.com 8.8.8.8/32;
+     address UNICAST { ... }
+[edit security]
++   nat {
++       source {
++           pool INTERNET {
++               address {
++                  1.1.1.1/32;
++               }
++           }
++           rule-set SOUTH_TO_NORTH {
++               from zone [ DMZ EAST ];
++               to zone INTERNET;
++               rule HTTP_HTTPS {
++                   match {
++                       source-address 10.20.0.0/16;
++                       destination-address 0.0.0.0/0;
++                       protocol tcp;
++                   }
++                   then {
++                       source-nat {
++                           pool {
++                               INTERNET;
++                           }
++                       }
++                   }
++               }
++               rule ICMP {
++                   match {
++                       source-address 10.20.0.0/16;
++                       destination-address 0.0.0.0/0;
++                       protocol icmp;
++                   }
++                   then {
++                       source-nat {
++                           pool {
++                               INTERNET;
++                           }
++                       }
++                   }
++               }
++               rule PUBLIC_UNICAST_HTTPS {
++                   match {
++                       source-address 1.1.1.0/24;
++                       destination-address 0.0.0.0/0;
++                       protocol tcp;
++                   }
++                   then {
++                       source-nat {
++                           pool {
++                               INTERNET;
++                           }
++                       }
++                   }
++               }
++               rule LOGGER {
++                   match {
++                       source-address 10.20.0.0/16;
++                       destination-address 0.0.0.0/0;
++                       destination-port {
++                           16000;
++                       }
++                       protocol tcp;
++                   }
++                   then {
++                       source-nat {
++                           pool {
++                               INTERNET;
++                           }
++                       }
++                   }
++               }
++           }
++       }
++       destination {
++           pool MY_DNAT_SVC {
++               address 10.20.0.2/32;
++           }
++           rule-set MY_DNAT_SVC {
++               from zone [ DMZ INTERNET ];
++               rule SMTP {
++                   match {
++                       source-address 0.0.0.0/0;
++                       destination-address 1.1.1.30/32;
++                       protocol tcp;
++                   }
++                   then {
++                       destination-nat {
++                           pool {
++                               MY_DNAT_SVC;
++                           }
++                       }
++                   }
++               }
++           }
++       }
++   }
+[edit policy-options]
++   policy-statement DENY_EXPORT {
++       term DEFAULT_DENY_EXPORT {
++           then reject;
++       }
++   }
++   policy-statement DENY_IMPORT {
++       term DEFAULT_DENY_IMPORT {
++           then reject;
++       }
++   }
+[edit firewall family inet filter CPP]
+      term LOOPBACK { ... }
+!      term BFD { ... }
+!      term BGP_IPV4_IN { ... }
+!      term BGP_IPV4_OUT { ... }
+[edit firewall family inet filter CPP]
+      term DNS { ... }
+!      term ICMP { ... }
+!      term ICMP-ELSE { ... }
+!      term NETCONF { ... }
+[edit firewall family inet filter CPP]
+      term NTP { ... }
+!      term OSPF-IPV4 { ... }
+[edit firewall family inet filter CPP]
+      term SSH { ... }
+!      term TRACEROUTE_ICMP { ... }
+!      term TRACEROUTE_TCP { ... }
+changed: [dc0_sfw]
+
+RUNNING HANDLER [config_setup_commit : delete generated config file] ********************************************************
+--- before
++++ after
+@@ -1,4 +1,4 @@
+ {
+     "path": "config/dc0_sfw/all_config.conf",
+-    "state": "file"
++    "state": "absent"
+ }
+
+changed: [dc0_sfw]
+
+PLAY RECAP ******************************************************************************************************************
+dc0_sfw                : ok=26   changed=23   unreachable=0    failed=0    skipped=1    rescued=0    ignored=0  

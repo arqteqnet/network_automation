@@ -1,0 +1,165 @@
+#jinja2:lstrip_blocks:True
+{% set hostname = junos.hostname | lower %}
+{% set personality = junos.personality | lower %}
+{% if l2_protocols is defined or l2_protocols_common is defined %}
+protocols {
+    {% if personality == "switch" %}
+    {% if l2_protocols.igmp_snoop_vlans is defined %}
+    igmp-snooping {
+        {% if l2_protocols.igmp_snoop_vlans is string or l2_protocols.igmp_snoop_vlans is number %}
+        vlan {{ l2_protocols.igmp_snoop_vlans }};
+        {% else %}
+        {% for vlan in l2_protocols.igmp_snoop_vlans %}
+        vlan {{ vlan }};
+        {% endfor %}
+        {% endif %}
+    }
+    {% endif %}
+    {% if l2_protocols.rstp is defined %}
+    rstp {
+        {% if l2_protocols.rstp.bridge_priority is defined %}
+        bridge-priority {{ l2_protocols.rstp.bridge_priority }};
+        {% endif %}
+        {% if l2_protocols.rstp.iface_no_stp is defined %}
+        {% if l2_protocols.rstp.iface_no_stp is string %}
+        interface {{l2_protocols.rstp.iface_no_stp }} {
+            disable;
+        }
+        {% else %}
+        {% for iface in l2_protocols.rstp.iface_no_stp %}
+        interface {{iface }} {
+            disable;
+        }
+        {% endfor %}
+        {% endif %}
+        {% endif %}
+        {% if l2_protocols.rstp.iface_edge is defined %}
+        {% if l2_protocols.rstp.iface_edge is string %}
+        interface {{ l2_protocols.rstp.iface_edge }} {
+            edge;
+        }
+        {% else %}
+        {% for iface in l2_protocols.rstp.iface_edge %}
+        interface {{ iface }} {
+            edge;
+        }
+        {% endfor %}
+        {% endif %}
+        {% endif %}
+        {% if l2_protocols.rstp.iface_no_root is defined %}
+        {% if l2_protocols.rstp.iface_no_root is string %}
+        interface {{ l2_protocols.rstp.iface_no_root }} {
+            no-root-port;
+        }
+        {% else %}
+        {% for iface in l2_protocols.rstp.iface_no_root %}
+        interface {{ iface }} {
+            no-root-port;
+        }
+        {% endfor %}
+        {% endif %}
+        {% endif %}
+        bpdu-block-on-edge;
+    }
+    {% endif %}
+    {% if l2_protocols.lldp is defined %}
+    lldp {
+        {% if l2_protocols.lldp.iface_enabled is string %}
+        interface {{ l2_protocols.lldp.iface_enabled }};
+        {% else %}
+        {% for iface in l2_protocols.lldp.iface_enabled %}
+        interface {{iface }};
+        {% endfor %}
+        {% endif %}
+        {% if l2_protocols.lldp.iface_disabled is defined %}
+        {% if l2_protocols.lldp.iface_disabled is string %}
+        interface {{ l2_protocols.lldp.iface_disabled }} {
+            disable;
+        }
+        {% else %}
+        {% for iface in l2_protocols.lldp.iface_disabled %}
+        interface {{ iface }} {
+            disable;
+        }
+        {% endfor %}
+        {% endif %}
+        {% endif %}
+    }
+    {% endif %}
+    {% if "thw" not in hostname or "ld5" not in hostname %}
+    {% if l2_protocols.lldp.med is defined %}
+    lldp-med {
+        {% if l2_protocols.lldp.med is string %}
+        interface {{ l2_protocols.lldp.med }};
+        {% else %}
+        {% for iface in l2_protocols.lldp.med %}
+        interface {{iface }};
+        {% endfor %}
+    }
+        {% endif %}
+    {% endif %}
+    {% endif %}
+{% endif %}
+    {% if personality != "switch" %}
+    lldp {
+        {% if l2_protocols is defined  %}
+        {% if l2_protocols.lldp.iface_enabled is string %}
+        interface all;
+        {% else %}
+        {% for iface in l2_protocols.lldp.iface_enabled %}
+        interface {{iface }};
+        {% endfor %}
+        {% endif %}
+        {% if l2_protocols.lldp.iface_disabled is defined %}
+        {% if l2_protocols.lldp.iface_disabled is string %}
+        interface {{ l2_protocols.lldp.iface_disabled }} {
+            disable;
+        }
+        {% else %}
+        {% for iface in l2_protocols.lldp.iface_disabled %}
+        interface {{ iface }} {
+            disable;
+        }
+        {% endfor %}
+        {% endif %}
+        {% endif %}{% endif %}
+
+        {% if l2_protocols_common is defined  %}
+        {% if l2_protocols_common.lldp.iface_enabled is string %}
+        interface all;
+        {% else %}
+        {% for iface in l2_protocols_common.lldp.iface_enabled %}
+        interface {{iface }};
+        {% endfor %}
+        {% endif %}
+        {% if l2_protocols_common.lldp.iface_disabled is defined %}
+        {% if l2_protocols_common.lldp.iface_disabled is string %}
+        interface {{ l2_protocols_common.lldp.iface_disabled }} {
+            disable;
+        }
+        {% else %}
+        {% for iface in l2_protocols_common.lldp.iface_disabled %}
+        interface {{ iface }} {
+            disable;
+        }
+        {% endfor %}
+        {% endif %}
+        {% endif %}{% endif %}
+    }
+
+    {% if "thw" not in hostname or "ld5" not in hostname %}
+    {% if l2_protocols.lldp.med is defined %}
+    lldp-med {
+        {% if l2_protocols.lldp.med is string %}
+        interface {{ l2_protocols.lldp.med }};
+        {% else %}
+        {% for iface in l2_protocols.lldp.med %}
+        interface {{iface }};
+        {% endfor %}
+        {% endif %}
+    }
+    {% endif %}
+    {% endif %}
+    {% endif %}
+}
+{% endif %}

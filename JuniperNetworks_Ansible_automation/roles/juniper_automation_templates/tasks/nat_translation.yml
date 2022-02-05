@@ -1,0 +1,5 @@
+---
+- name: nat translation settings
+  template:
+    src: nat_translations.j2
+    dest: "{{ config_assemble_build }}/nat_translations.conf"

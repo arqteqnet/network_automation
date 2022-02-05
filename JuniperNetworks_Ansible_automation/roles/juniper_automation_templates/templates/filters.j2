@@ -1,0 +1,307 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% set switch_style = junos.switch_style | lower %}
+{% if filters_v4_common is defined or filters_v4_public is defined or filters_v4 is defined %}
+firewall {
+    family inet {
+        {% if filters_v4 is defined %}
+        {% for filter_name, data in filters_v4.items() %}
+        filter {{ filter_name }} {
+            {% for filter, data in data.items() %}
+            term {{ filter }} {
+                {% if data.from is defined %}
+                from {
+                {% if data.from.non_prefix is defined %}
+                    {% for item in data.from.non_prefix %}
+                    {{ item }};
+                    {% endfor %}
+                {% endif %}
+                    {% if data.from.prefix_list is defined %}
+                    prefix-list {
+                        {% for prefix in data.from.prefix_list %}
+                        {{ prefix }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.source_prefix_list is defined %}
+                    source-prefix-list {
+                        {% for source in data.from.source_prefix_list %}
+                        {{ source }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.destination_prefix_list is defined %}
+                    destination-prefix-list {
+                        {% for destination in data.from.destination_prefix_list %}
+                        {{ destination }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.protocol is defined %}
+                    {% if data.from.protocol is string %}
+                    protocol {{ data.from.protocol }};
+                    {% else %}
+                    protocol [ {{ data.from.protocol| join(" ") }} ];;
+                    {% endif %}{% endif %}
+                    {% if data.from.icmp_type is defined %}
+                    {% if data.from.icmp_type is string or data.from.icmp_type is number %}
+                    icmp-type {{ data.from.icmp_type }};
+                    {% else %}
+                    icmp-type [ {{ data.from.icmp_type| join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.source_port is defined %}
+                    {% if data.from.source_port is string or data.from.source_port is number %}
+                    source-port {{ data.from.source_port }};
+                    {% else %}
+                    source-port [ {{ data.from.source_port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.destination_port is defined %}
+                    {% if data.from.destination_port is string or data.from.destination_port is number %}
+                    destination-port {{ data.from.destination_port }};
+                    {% else %}
+                    destination-port [ {{ data.from.destination_port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.port is defined %}
+                    {% if data.from.port is string or data.from.port is number %}
+                    port {{ data.from.port }};
+                    {% else %}
+                    port [ {{ data.from.port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.ttl is defined %}
+                    ttl {{ data.from.ttl }};
+                    {% endif %}
+                }
+                {% endif %}
+                {% if data.then is defined %}
+                then {
+                    {% if data.then.actions is defined %}
+                    {% for action in data.then.actions %}
+                    {% if action == 'syslog' and switch_style == 'vlan' %}
+                    {% elif action == 'log' and switch_style == 'vlan' %}
+                    {% else %}
+                    {{ action }};
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    {% if data.then.count is defined %}
+                    count {{ data.then.count }};
+                    {% endif %}
+                    {% if data.then.policer is defined %}
+                    policer {{ data.then.policer }};
+                    {% endif %}
+                    {% if data.then.terminate_action is defined %}
+                    {{ data.then.terminate_action }};
+                    {% endif %}
+                }
+                {% endif %}
+            }
+            {% endfor %}
+        }
+        {% endfor %}
+        {% endif %}
+
+        {% if filters_v4_common is defined %}
+        {% for filter_name, data in filters_v4_common.items() %}
+        filter {{ filter_name }} {
+            {% for filter, data in data.items() %}
+            term {{ filter }} {
+                {% if data.from is defined %}
+                from {
+                {% if data.from.non_prefix is defined %}
+                    {% for item in data.from.non_prefix %}
+                    {{ item }};
+                    {% endfor %}
+                {% endif %}
+                    {% if data.from.prefix_list is defined %}
+                    prefix-list {
+                        {% for prefix in data.from.prefix_list %}
+                        {{ prefix }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.source_prefix_list is defined %}
+                    source-prefix-list {
+                        {% for source in data.from.source_prefix_list %}
+                        {{ source }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.destination_prefix_list is defined %}
+                    destination-prefix-list {
+                        {% for destination in data.from.destination_prefix_list %}
+                        {{ destination }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.protocol is defined %}
+                    protocol {{ data.from.protocol }};
+                    {% endif %}
+                    {% if data.from.icmp_type is defined %}
+                    {% if data.from.icmp_type is string or data.from.icmp_type is number %}
+                    icmp-type {{ data.from.icmp_type }};
+                    {% else %}
+                    icmp-type [ {{ data.from.icmp_type| join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.source_port is defined %}
+                    {% if data.from.source_port is string or data.from.source_port is number %}
+                    source-port {{ data.from.source_port }};
+                    {% else %}
+                    source-port [ {{ data.from.source_port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.destination_port is defined %}
+                    {% if data.from.destination_port is string or data.from.destination_port is number %}
+                    destination-port {{ data.from.destination_port }};
+                    {% else %}
+                    destination-port [ {{ data.from.destination_port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.port is defined %}
+                    {% if data.from.port is string or data.from.port is number %}
+                    port {{ data.from.port }};
+                    {% else %}
+                    port [ {{ data.from.port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if switch_style != 'vlan' %}
+                    {% if data.from.ttl is defined %}
+                    ttl {{ data.from.ttl }};
+                    {% endif %}{% endif %}
+                }
+                {% endif %}
+                {% if data.then is defined %}
+                then {
+                    {% if data.then.actions is defined %}
+                    {% for action in data.then.actions %}
+                    {% if 'srx' in personality or 'mx' in personality %}
+                    {{ action }};
+                    {% elif personality == 'switch' %}
+                    {% if action == 'syslog' and switch_style == 'vlan' %}
+                    {% elif action == 'log' and switch_style == 'vlan' %}
+                    {% else %}
+                    {{ action }};
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    {% if data.then.count is defined %}
+                    count {{ data.then.count }};
+                    {% endif %}
+                    {% if data.then.policer is defined %}
+                    {% if switch_style != 'vlan' %}
+                    policer {{ data.then.policer }};
+                    {% endif %}{% endif %}
+                    {% if data.then.terminate_action is defined %}
+                    {{ data.then.terminate_action }};
+                    {% endif %}
+                }
+                {% endif %}
+            }
+            {% endfor %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if filters_v4_public is defined %}
+        {% for filter_name, data in filters_v4_public.items() %}
+        filter {{ filter_name }} {
+            {% for filter, data in data.items() %}
+            term {{ filter }} {
+                {% if data.from is defined %}
+                from {
+                {% if data.from.non_prefix is defined %}
+                    {% for item in data.from.non_prefix %}
+                    {{ item }};
+                    {% endfor %}
+                {% endif %}
+                    {% if data.from.prefix_list is defined %}
+                    prefix-list {
+                        {% for prefix in data.from.prefix_list %}
+                        {{ prefix }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.source_prefix_list is defined %}
+                    source-prefix-list {
+                        {% for source in data.from.source_prefix_list %}
+                        {{ source }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.destination_prefix_list is defined %}
+                    destination-prefix-list {
+                        {% for destination in data.from.destination_prefix_list %}
+                        {{ destination }};
+                        {% endfor %}
+                    }
+                    {% endif %}
+                    {% if data.from.protocol is defined %}
+                    protocol {{ data.from.protocol }};
+                    {% endif %}
+                    {% if data.from.icmp_type is defined %}
+                    {% if data.from.icmp_type is string or data.from.icmp_type is number %}
+                    icmp-type {{ data.from.icmp_type }};
+                    {% else %}
+                    icmp-type [ {{ data.from.icmp_type| join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.source_port is defined %}
+                    {% if data.from.source_port is string or data.from.source_port is number %}
+                    source-port {{ data.from.source_port }};
+                    {% else %}
+                    source-port [ {{ data.from.source_port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.destination_port is defined %}
+                    {% if data.from.destination_port is string or data.from.destination_port is number %}
+                    destination-port {{ data.from.destination_port }};
+                    {% else %}
+                    destination-port [ {{ data.from.destination_port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.port is defined %}
+                    {% if data.from.port is string or data.from.port is number %}
+                    port {{ data.from.port }};
+                    {% else %}
+                    port [ {{ data.from.port|join(" ")}} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if data.from.ttl is defined %}
+                    ttl {{ data.from.ttl }};
+                    {% endif %}
+                }
+                {% endif %}
+                {% if data.then is defined %}
+                then {
+                    {% if data.then.actions is defined %}
+                    {% for action in data.then.actions %}
+                    {% if action == 'syslog' and switch_style == 'vlan' %}
+                    {% elif action == 'log' and switch_style == 'vlan' %}
+                    {% else %}
+                    {{ action }};
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    {% if data.then.count is defined %}
+                    count {{ data.then.count }};
+                    {% endif %}
+                    {% if data.then.policer is defined %}
+                    policer {{ data.then.policer }};
+                    {% endif %}
+                    {% if data.then.terminate_action is defined %}
+                    {{ data.then.terminate_action }};
+                    {% endif %}
+                }
+                {% endif %}
+            }
+            {% endfor %}
+        }
+        {% endfor %}{% endif %}
+
+    }
+{% endif %}
+}

@@ -1,0 +1,193 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+interfaces {
+    {% if interfaces.interface_range is defined %}
+    {% for rnge, members in interfaces.interface_range.items() %}
+    interface-range {{ rnge }} {
+        {% if members.disabled is defined %}
+        {% if members.disabled == True %}
+        disable;
+        {% endif %}
+        {% endif %}
+        {% if members.mber_rnge is defined %}
+        {% for rnge, ports in members.mber_rnge.items() %}
+        member-range {{ ports[0] }} to {{ ports[1] }};
+        {% endfor %}
+        {% endif %}
+        {% if members.member is defined %}
+        {% for mem in members.member %}
+        member {{ mem }};
+        {% endfor %}
+        {% endif %}
+        {% if members.unit is defined %}
+        unit {{ members.unit}} {
+            {% if members.description is defined %}
+            description " {{ members.description }} ";
+            {% endif %}
+            {% if members.family is defined %}
+            family {{ members.family }} {
+            {% if members.filter_input is defined %}
+            {% if members.filter_input is string %}
+                filter {
+                    input {{ members.filter_input }};
+                }
+            {% else %}
+                filter {
+                    input-list [ {{ members.filter_input| join(" ") }} ];
+                }
+            {% endif %}
+            {% endif %}
+            {% if members.filter_output is defined %}
+            {% if members.filter_output is string %}
+                filter {
+                    output {{ members.filter_input }};
+                }
+            {% else %}
+                filter {
+                    output-list [ {{ members.filter_output|join(" ") }} ];
+                }
+            {% endif %}
+            {% endif %}
+               {% if members.vlan is defined %}
+                vlan {
+                    members {{ members.vlan }};
+                }
+                {% endif %}
+                {% if members.port_mode is defined %}
+                interface-mode {{ members.port_mode }};
+                {% endif %}
+            }
+            {% endif %}
+        }
+        {% endif %}
+    }
+    {% endfor %}{% endif %}
+    {% if interfaces.interface is defined %}
+    {% for iface, data in interfaces.interface.items() %}
+    {% if data.fabric_member is defined %}
+    {{ data.fabric_member }} {
+        fabric-options {
+            member-interfaces {
+                {{ iface }};
+                }
+            }
+        }
+    {% endif %}
+    {{ iface }} {
+        {% if data.phy_description is defined %}
+        description "{{ data.phy_description }}";
+        {% endif %}
+        {% if data.vlan_tagging is defined %}
+        {% if data.vlan_tagging == True %}
+        vlan-tagging;
+        {% endif %}
+        {% endif %}
+        {% if data.mtu is defined %}
+        mtu "{{ data.mtu }}";
+        {% endif %}
+        {% if data.encapsulation is defined %}
+        encapsulation {{ data.encapsulation }};
+        {% endif %}
+        {% if data.apply_groups is defined %}
+        {% if data.apply_groups is string %}
+        apply-groups {{ data.apply_groups }};
+        {% else %}
+        apply-groups [ {{ data.apply_groups|join(" ") }} ];
+        {% endif %}
+        {% endif %}
+        {% if data.bond_ether_options is defined %}
+        aggregated-ether-options {
+            {% if data.bond_ether_options.speed is defined %}
+            link-speed {{ data.bond_ether_options.speed }};
+            {% endif %}
+        }
+        {% endif %}
+        {% if data.ether_options is defined %}
+        ether-options {
+            {% if data.ether_options.bond_parent is defined %}
+            802.3ad {{ data.ether_options.bond_parent }};
+            {% endif %}
+            {% if data.ether_options.speed is defined %}
+            speed  {
+                {{ data.ether_options.speed }};
+            }
+            {% endif %}
+        }
+        {% endif %}
+        {% if "srx" in personality %}
+        {% if "reth" in iface %}
+        {% if data.redundant_ether_options is defined %}
+        redundant-ether-options {
+            redundancy-group {{ data.redundant_ether_options.redundancy_group }};
+            {% if data.redundant_ether_options.min_links is defined %}
+            minimum-links 1;
+            {% endif %}
+            {% if data.redundant_ether_options.lacp is defined %}
+            lacp {
+                {% if data.redundant_ether_options.lacp.lacp_state is defined %}
+                {{ data.redundant_ether_options.lacp.lacp_state }};
+                {% endif %}
+                {% if data.redundant_ether_options.lacp.lacp_timers is defined %}
+                periodic {{ data.redundant_ether_options.lacp.lacp_timers }};
+                {% endif %}
+            }
+            {% endif %}
+        }
+        {% endif %}{% endif %}{% endif %}
+
+       {% if data.unit is defined %}
+       {% for subint in data.unit %}
+        unit {{ subint.name }} {
+            {% if subint.description is defined %}
+            description " {{ subint.description }} ";
+            {% endif %}
+            {% if subint.vlan_id is defined and data.vlan_tagging is defined %}
+            {% if data.vlan_tagging == True %}
+            vlan-id {{ subint.vlan_id }};
+            {% endif %}
+            {% elif data.vlan_tagging is defined and subint.vlan_id is not defined %}
+            {% if data.vlan_tagging == True %}
+            vlan-id {{ subint.name }};
+            {% endif %}
+            {% endif %}
+            {% if subint.family is defined %}
+            family {{ subint.family }} {
+            {% if subint.filter_input is defined %}
+            {% if subint.filter_input is string %}
+                filter {
+                    input {{ subint.filter_input }};
+                }
+            {% else %}
+                filter {
+                    input-list [ {{ subint.filter_input| join(" ") }} ];
+                }
+            {% endif %}
+            {% endif %}
+            {% if subint.filter_output is defined %}
+            {% if subint.filter_output is string %}
+                filter {
+                    output {{ member.filter_input }};
+                }
+            {% else %}
+                filter {
+                    output-list [ {{ member.filter_output|join(" ") }} ];
+                }
+            {% endif %}
+            {% endif %}
+                {% if subint.ipv4_address is defined %}
+                address {{ subint.ipv4_address }}/{{ subint.ipv4_mask }};
+                {% endif %}
+                {% if subint.multiple_ipv4_address is defined %}
+                {% for address in subint.multiple_ipv4_address %}
+                address {{ address }};
+                {% endfor %}
+                {% endif %}
+            }
+           {% endif %}
+    }
+        {% endfor %}
+        {% endif %}
+    }
+    {% endfor %}
+    {% endif %}
+}

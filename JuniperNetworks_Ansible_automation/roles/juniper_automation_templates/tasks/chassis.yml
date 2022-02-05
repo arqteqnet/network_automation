@@ -1,0 +1,5 @@
+---
+- name: chassis settings
+  template:
+    src: chassis.j2
+    dest: "{{ config_assemble_build }}/chassis.conf"

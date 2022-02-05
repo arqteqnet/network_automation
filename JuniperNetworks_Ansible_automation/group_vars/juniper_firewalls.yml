@@ -1,0 +1,119 @@
+---
+prefix_lists_v4_firewall_common:
+    IPESC-VPN: apply-path "security ike gateway <*> address <*.*.*.*>"
+
+firewall_policies_common:
+    global:
+        - name: DEFAULT_DENY
+          dst: any
+          src: any
+          from_zone: any
+          to_zone: any
+          application: any
+          actions:
+              log_actions: session-init
+          terminate_action: deny
+
+system_firewall:
+    syslog:
+        files:
+            firewall:
+                facility:
+                    - name: firewall
+                      log_level: any
+                      archive_size: 10m
+            denied_traffic:
+                facility:
+                    - name: any
+                      log_level: any
+                      matching: RT_FLOW_SESSION_DENY
+
+address_entries_common:
+    global:
+        - name: RFC1918_10
+          ip: 10.0.0.0
+          mask: 8
+        - name: RFC1918_172
+          ip: 172.16.0.0
+          mask: 12
+        - name: RFC1918_192
+          ip: 192.168.0.0
+          mask: 16
+
+address_groups_common:
+    global:
+        - name: RFC1918_NETWORKS
+          address:
+              - RFC1918_10
+              - RFC1918_172
+              - RFC1918_192
+
+ipsec_common:
+    ike_proposals:
+        EXAMPLE_COMMON_IKE_PROPOSALS:
+            description: Phase 1
+            auth_method: pre-shared-keys
+            dh_group: group19
+            auth_algorithm: sha-256
+            enc_algorithm: aes-256-cbc
+            lifetime_seconds: 86400
+
+    ipsec_proposals:
+        EXAMPLE_COMMON_IPSEC_PROPOSALS:
+            protocol: esp
+            auth_algorithm: hmac-sha-256-128
+            enc_algorithm: aes-256-cbc
+            life_time: 3600
+
+    ipsec_policy:
+        EXAMPLE_COMMON_IPSEC_POLICY:
+            secret_forward_dh: group2
+            proposals: EXAMPLE_COMMON_IPSEC_PROPOSALS
+
+
+
+custom_applications_common:
+    applications:
+        ldaps:
+            protocol: tcp
+            dst_port: 636
+    multi_term_app:
+        kerberos:
+            1:
+                protocol: tcp
+                dst_port: 464
+            2:
+                protocol: udp
+                dst_port: 464
+            3:
+                protocol: tcp
+                dst_port: 88
+            4:
+                protocol: udp
+                dst_port: 88
+        backup_services:
+            mysql:
+                protocol: tcp
+                dst_port: 3306
+
+    app_sets:
+        DNS:
+            - junos-dns-udp
+            - junos-dns-tcp
+
+        WEB:
+            - junos-http
+            - junos-https
+
+
+
+route_maps_common:
+    DENY_EXPORT:
+        DEFAULT_DENY_EXPORT:
+            then:
+                terminate_action: reject
+
+    DENY_IMPORT:
+        DEFAULT_DENY_IMPORT:
+            then:
+                terminate_action: reject

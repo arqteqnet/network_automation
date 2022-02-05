@@ -1,0 +1,39 @@
+#jinja2:lstrip_blocks:True
+{% set model = junos.model | lower %}
+{% set personality = junos.personality | lower %}
+{% if personality == "switch" %}
+{% if vlans is defined %}
+{% for name, data in vlans.items() %}
+vlans {
+    {{ name }} {
+        vlan-id {{ data.id }};
+        {% if data.description is defined %}
+        description "{{ data.description }}";
+        {% endif %}
+        {% if data.svi_name is defined %}
+        l3-interface {{ data.svi_name }};
+        {% endif %}
+
+    }
+}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% if personality == "router" %}
+{% if vlans is defined %}
+{% for name, data in vlans.items() %}
+bridge-domains {
+    {{ name }} {
+        vlan-id {{ data.id }};
+        {% if data.interfaces is defined %}
+        {% for iface in data.interfaces %}
+        interface {{ iface }};
+        {% endfor %}
+        {% endif %}
+        {% if data.svi_name is defined %}
+        routing-interface {{ data.svi_name }};
+        {% endif %}
+    }
+{% endfor %}
+{% endif %}
+{% endif %}

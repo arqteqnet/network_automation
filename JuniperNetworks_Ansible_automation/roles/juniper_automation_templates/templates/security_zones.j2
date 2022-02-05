@@ -1,0 +1,130 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if "srx" in personality %}
+{% if firewall_zones is defined or firewall_zones_branch is defined or firewall_zones_datacentre is defined %}
+security {
+    zones {
+        {% if firewall_zones is defined %}
+        {% for zone in firewall_zones %}
+        security-zone {{ zone.name }} {
+            {% if zone.system_services is defined or zone.protocols is defined %}
+            host-inbound-traffic {
+                {% if zone.system_services is defined %}
+                system-services {
+                {% for service in zone.system_services %}
+                    {{ service }};
+                {% endfor %}
+                }
+                {% endif %}
+                {% if zone.protocols is defined %}
+                protocols {
+                    {% for protocol in zone.protocols %}
+                    {{ protocol }};
+                    {% endfor %}
+                }
+                {% endif %}
+            }
+            {% endif %}
+
+            {% if interfaces.interface is defined %}
+            interfaces {
+                {% for iface, data in interfaces.interface.items() %}
+                {% if data.unit is defined %}
+                {% for subint in data.unit %}
+                {% if subint.security_zone is defined %}
+                {% if subint.security_zone == zone.name %}
+                {{ iface}}.{{ subint.name }};
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+            }
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if firewall_zones_datacentre is defined %}
+        {% for zone in firewall_zones_datacentre %}
+        security-zone {{ zone.name }} {
+            {% if zone.system_services is defined or zone.protocols is defined %}
+            host-inbound-traffic {
+                {% if zone.system_services is defined %}
+                system-services {
+                {% for service in zone.system_services %}
+                    {{ service }};
+                {% endfor %}
+                }
+                {% endif %}
+                {% if zone.protocols is defined %}
+                protocols {
+                    {% for protocol in zone.protocols %}
+                    {{ protocol }};
+                    {% endfor %}
+                }
+                {% endif %}
+            }
+            {% endif %}
+
+            {% if interfaces.interface is defined %}
+            interfaces {
+                {% for iface, data in interfaces.interface.items() %}
+                {% if data.unit is defined %}
+                {% for subint in data.unit %}
+                {% if subint.security_zone is defined %}
+                {% if subint.security_zone == zone.name %}
+                {{ iface}}.{{ subint.name }};
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+            }
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+        {% if firewall_zones_branch is defined %}
+        {% for zone in firewall_zones_branch %}
+        security-zone {{ zone.name }} {
+            {% if zone.system_services is defined or zone.protocols is defined %}
+            host-inbound-traffic {
+                {% if zone.system_services is defined %}
+                system-services {
+                {% for service in zone.system_services %}
+                    {{ service }};
+                {% endfor %}
+                }
+                {% endif %}
+                {% if zone.protocols is defined %}
+                protocols {
+                    {% for protocol in zone.protocols %}
+                    {{ protocol }};
+                    {% endfor %}
+                }
+                {% endif %}
+            }
+            {% endif %}
+
+            {% if interfaces.interface is defined %}
+            interfaces {
+                {% for iface, data in interfaces.interface.items() %}
+                {% if data.unit is defined %}
+                {% for subint in data.unit %}
+                {% if subint.security_zone is defined %}
+                {% if subint.security_zone == zone.name %}
+                {{ iface}}.{{ subint.name }};
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+                {% endif %}
+                {% endfor %}
+            }
+            {% endif %}
+        }
+        {% endfor %}{% endif %}
+
+    }
+}
+{% endif %}
+{% endif %}

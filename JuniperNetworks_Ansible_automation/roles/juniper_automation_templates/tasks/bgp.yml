@@ -1,0 +1,6 @@
+---
+- name: bgp settings
+  template:
+    src: bgp.j2
+    dest: "{{ config_assemble_build }}/bgp.conf"
+

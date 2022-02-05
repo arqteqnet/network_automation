@@ -1,0 +1,6 @@
+---
+- name: filter settings
+  template:
+    src: filters.j2
+    dest: "{{ config_assemble_build }}/filters.conf"
+

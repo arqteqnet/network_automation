@@ -1,0 +1,237 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if l3_protocols.bgp is defined %}
+{% if l3_protocols.bgp.global_as is defined %}
+routing-options {
+    autonomous-system {{ l3_protocols.bgp.global_as }};
+}
+{% endif %}
+protocols {
+    bgp {
+        {% for group, config in l3_protocols.bgp.groups.items() %}
+        group {{ group }} {
+
+            type {{ config.peering_type|default('external') }};
+
+            {% if config.peering_type == "internal" %}
+
+            {% if config.advertise_path_as is defined %}
+            {% if config.advertise_path_as == True %}
+            advertise-peer-as;
+            {% endif %}{% endif %}
+
+            {% if config.multipath is defined %}
+            multipath;
+            {% endif %}
+
+
+            {% elif config.peering_type == "external" %}
+
+            {% if config.multipath is defined %}
+            multipath multiple-as;
+            {% endif %}
+
+            {% if config.replace_private_as_all is defined %}
+            {% if config.replace_private_as_all == True %}
+            remove-private {
+            all replace nearest;
+            }
+            {% endif %}{% endif %}
+
+            {% if config.enforce_first_as == True %}
+            enforce-first-as;
+            {% endif %}
+
+            {% endif %}
+
+            {% if config.hold_time is defined %}
+            hold-time {{ config.hold_time }};
+            {% endif %}
+
+            {% if config.bfd_timers is defined %}
+            bfd-liveness-detection {
+                {% if config.bfd_timers.min_interval is defined %}
+                minimum-interval {{ config.bfd_timers.min_interval }};
+                {% endif %}
+                {% if config.bfd_timers.multiplier is defined %}
+                multiplier {{ config.bfd_timers.multiplier }};
+                {% endif %}
+            }
+            {% endif %}
+
+            {% if config.description is defined %}
+            description "{{ config.description }}";
+            {% endif %}
+
+            {% if config.auth_key is defined %}
+            authentication-key "{{ config.auth_key }}";
+            {% endif %}
+
+            {% if config.multihop_peering is defined %}
+            multihop {
+                ttl {{ config.multihop_peering }};
+            }
+            {% endif %}
+
+            {% if config.local_peer is defined  %}
+            local-address {{ config.local_peer }};
+            {% endif %}
+
+            {% if config.family.inet is defined %}
+            family inet {
+                {% for fmly in config.family.inet %}
+                {% if fmly.options is not defined %}
+                {{ fmly.name }};
+                {% else %}
+                {{ fmly.name }} {
+                {% if fmly.options.as_loops is defined %}
+                    loops {{ fmly.options.as_loops }};
+                {% endif %}
+                }
+                {% endif %}
+                {% endfor %}
+            }
+            {% endif %}
+
+            {% if config.graceful_restart is defined %}
+            {% if config.graceful_restart == True %}
+            graceful-restart;
+            {% endif %}{% endif %}
+
+            {% if config.export_profile is defined %}
+            {% if config.export_profile is string %}
+            export {{ config.export_profile|default('DENY_EXPORT') }};
+            {% else %}
+            export [ {{ config.export_profile|join(" ") }} ];
+            {% endif %}{% endif %}
+
+
+            {% if config.import_profile is defined %}
+            {% if config.import_profile is string %}
+            import {{ config.import_profile|default('DENY_IMPORT') }};
+            {% else %}
+            import [ {{ config.import_profile|join(" ") }} ];
+            {% endif %}{% endif %}
+
+
+            {% if config.peer_as is defined %}
+            {% if config.peering_type == "internal" %}
+            {% if config.local_as is defined %}
+            peer-as {{ config.local_as }};
+            {% elif l3_protocols.bgp.global_as is defined %}
+            peer-as {{ l3_protocols.bgp.global_as }};
+            {% endif %}
+            {% elif config.peering_type == "external" %}
+            peer-as {{ config.peer_as }};
+            {% endif %}{% endif %}
+
+            {% if config.local_as is defined and l3_protocols.bgp.global_as is defined %}
+            {% if config.local_as != l3_protocols.bgp.global_as %}
+            local-as {{ config.local_as }};
+            {% endif %}
+            {% elif config.local_as is defined and l3_protocols.bgp.global_as is not defined %}
+            local-as {{ config.local_as }};
+            {% endif %}
+
+            {% if config.remote_peer is defined %}
+            {% if config.remote_peer is string or config.remote_peer is number %}
+            neighbor {{ config.remote_peer }};
+            {% else %}
+            {% for nbr in config.remote_peer %}
+            neighbor {{ nbr.neighbour }} {
+
+                    {% if nbr.hold_time is defined %}
+                    hold-time {{ nbr.hold_time }};
+                    {% endif %}
+
+                    {% if nbr.bfd_timers is defined %}
+                    bfd-liveness-detection {
+                    {% if nbr.bfd_timers.min_interval is defined %}
+                    minimum-interval {{ nbr.bfd_timers.min_interval }};
+                    {% endif %}
+                        }
+                    {% endif %}
+
+                    {% if nbr.description is defined %}
+                    description "{{ nbr.description }}";
+                    {% endif %}
+
+                    {% if nbr.auth_key is defined %}
+                    authentication-key "{{ nbr.auth_key }}";
+                    {% endif %}
+
+                    {% if nbr.multihop_peering is defined %}
+                    multihop {
+                        ttl {{ nbr.multihop_peering }};
+                    }
+                    {% endif %}
+
+                    {% if nbr.local_peer is defined  %}
+                    local-address {{ nbr.local_peer }};
+                    {% endif %}
+
+                    {% if nbr.family.inet is defined %}
+                    family inet {
+                        {% for fmly in nbr.family.inet %}
+                        {% if fmly.options is not defined %}
+                        {{ fmly.name }};
+                        {% else %}
+                        {{ fmly.name }} {
+                        {% if fmly.options.as_loops is defined %}
+                            loops {{ fmly.options.as_loops }};
+                        {% endif %}
+                        }
+                        {% endif %}
+                        {% endfor %}
+                    }
+                    {% endif %}
+
+                    {% if nbr.graceful_restart is defined %}
+                    {% if nbr.graceful_restart == True %}
+                    graceful-restart;
+                    {% endif %}{% endif %}
+
+                    {% if nbr.export_profile is defined %}
+                    {% if nbr.export_profile is string %}
+                    export {{ nbr.export_profile }};
+                    {% else %}
+                    export [ ]{{ nbr.export_profile|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+
+                    {% if nbr.import_profile is defined %}
+                    {% if nbr.import_profile is string %}
+                    import {{ nbr.import_profile }};
+                    {% else %}
+                    import {{ nbr.import_profile|join(" ") }};
+                    {% endif %}
+                    {% endif %}
+
+                    {% if nbr.peer_as is defined %}
+                    {% if config.peering_type == "internal" %}
+                    {% if nbr.local_as is defined %}
+                    peer-as {{ nbr.local_as }};
+                    {% elif config.local_as is defined %}
+                    peer-as {{ config.local_as }};
+                    {% elif l3_protocols.bgp.global_as is defined %}
+                    peer-as {{ l3_protocols.bgp.global_as }};
+                    {% endif %}
+                    {% elif config.peering_type == "external" %}
+                    peer-as {{ nbr.peer_as }};
+                    {% endif %}{% endif %}
+
+                    {% if nbr.local_as is defined and l3_protocols.bgp.global_as is defined %}
+                    {% if nbr.local_as != l3_protocols.bgp.global_as %}
+                    local-as {{ nbr.local_as }};
+                    {% endif %}
+                    {% elif nbr.local_as is defined and l3_protocols.bgp.global_as is not defined %}
+                    local-as {{ nbr.local_as }};
+                    {% endif %}
+                }
+                {% endfor %}
+                {% endif %}{% endif %}
+            }
+        {% endfor %}
+        }
+    }
+    {% endif %}

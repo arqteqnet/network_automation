@@ -1,0 +1,57 @@
+#jinja2:lstrip_blocks:True
+{% if prefix_lists_v4_common is defined or prefix_lists_v4 is defined or prefix_lists_public is defined %}
+policy-options {
+{% if prefix_lists_v4_common is defined  %}
+{% for policy, prefix in prefix_lists_v4_common.items() %}
+    prefix-list {{ policy }} {
+        {% if prefix is string or prefix is number %}
+        {{ prefix }};
+        {% else %}
+        {% for pfx in prefix %}
+        {{ pfx }};
+        {% endfor %}
+        {% endif %}
+    }
+{% endfor %}
+{% endif %}
+{% if prefix_lists_v4_firewall_common is defined  %}
+{% for policy, prefix in prefix_lists_v4_firewall_common.items() %}
+    prefix-list {{ policy }} {
+        {% if prefix is string or prefix is number %}
+        {{ prefix }};
+        {% else %}
+        {% for pfx in prefix %}
+        {{ pfx }};
+        {% endfor %}
+        {% endif %}
+    }
+{% endfor %}
+{% endif %}
+{% if prefix_lists_v4 is defined %}
+{% for plcy, pfx in prefix_lists_v4.items() %}
+    prefix-list {{ plcy }} {
+        {% if pfx is string or pfx is number %}
+        {{ pfx }};
+        {% else %}
+        {% for px in pfx %}
+        {{ px }};
+        {% endfor %}
+        {% endif %}
+    }
+{% endfor %}
+{% endif %}
+{% if prefix_lists_public is defined %}
+{% for plcy, pfx in prefix_lists_public.items() %}
+    prefix-list {{ plcy }} {
+        {% if pfx is string or pfx is number %}
+        {{ pfx }};
+        {% else %}
+        {% for px in pfx %}
+        {{ px }};
+        {% endfor %}
+        {% endif %}
+    }
+{% endfor %}
+{% endif %}
+}
+{% endif %}

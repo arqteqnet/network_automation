@@ -1,0 +1,6 @@
+---
+- name: IP SLA and RPM settings
+  template:
+    src: ip_sla.j2
+    dest: "{{ config_assemble_build }}/ip_sla.conf"
+

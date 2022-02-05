@@ -1,0 +1,32 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% set model = junos.model | lower %}
+{% if personality == 'switch' %}
+{% if storm_control is defined %}
+{% if 'ex4300' in model %}
+forwarding-options {
+    storm-control-profiles {{ storm_control.profile }} {
+        {% if storm_control.bum_type is defined %}
+        {% if storm_control.options is defined %}
+        {{ storm_control.bum_type }} {
+            {% if storm_control.options.iface_drop is defined %}
+            bandwidth-percentage {{ storm_control.options.iface_drop }};
+        }
+            {% endif %}
+        {% else %}
+        {{ storm_control.bum_type }};
+        {% endif %}
+        {% endif %}
+    }
+}
+{% elif 'ex4200' in model or 'ex2200' in model %}
+ethernet-switching-options {
+    storm-control {
+        interface all {
+            level {{ storm_control.options.iface_drop|default(30) }};
+        }
+    }
+}
+{% endif %}
+{% endif %}
+{% endif %}

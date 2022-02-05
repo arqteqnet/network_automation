@@ -1,0 +1,130 @@
+---
+system_firewall:
+    syslog:
+        files:
+            firewall:
+                facility:
+                    - name: firewall
+                      log_level: any
+                      archive_size: 10m
+            denied_traffic:
+                facility:
+                    - name: any
+                      log_level: any
+                      matching: RT_FLOW_SESSION_DENY
+
+address_entries_common:
+    global:
+        - name: EXAMPLE
+          ip: 10.1.11.0
+          mask: 24
+        - name: EXAMPLE_PUBLIC
+          ip: 10.1.11.0
+          mask: 24
+        - name: CLOUD_NET
+          ip: 10.190.0.0
+          mask: 16
+        - name: CLOUD_API_NET
+          ip: 10.45.192.0
+          mask: 20
+        - name: DC2_CLOUD_NET
+          ip: 10.90.0.0
+          mask: 16
+        - name: DEV_CLOUD_NET
+          ip: 10.9.0.0
+          mask: 16
+        - name: DC2_CLOUD_API_NET
+          ip: 10.90.192.0
+          mask: 20
+        - name: google.com
+          ip: "{{ lookup('dig', 'google.com') }}"
+          mask: 32
+        - name: bind0.infra.example.com
+          ip: "{{ lookup('dig', 'bind0.infra.example.com') }}"
+          mask: 32
+        - name: bind1.infra.example.com
+          ip: "{{ lookup('dig', 'bind1.infra.example.com') }}"
+          mask: 32
+
+address_groups_common:
+    global:
+        - name: BIND_SERVERS
+          address:
+              - bind0.infra.example.com
+              - bind1.infra.example.com
+
+firewall_policies_common:
+    global:
+        - name: PUBLIC_SERVICES
+          dst: EXAMPLE_PUBLIC
+          src: any
+          from_zone: INTERPOD
+          to_zone: DMZ
+          application:
+              - junos-https
+              - junos-http
+              - junos-ping
+          terminate_action: permit
+
+
+
+    zonal:
+
+
+custom_applications_common:
+    applications:
+        ldaps:
+            protocol: tcp
+            dst_port: 636
+        postgres:
+            protocol: tcp
+            dst_port: 5432
+    multi_term_app:
+        prometheus_monitoring:
+            prometheus:
+                protocol: tcp
+                dst_port: 9090
+            grafana:
+                protocol: tcp
+                dst_port: 3000
+
+        kerberos:
+            1:
+                protocol: tcp
+                dst_port: 464
+            2:
+                protocol: udp
+                dst_port: 464
+            3:
+                protocol: tcp
+                dst_port: 88
+            4:
+                protocol: udp
+                dst_port: 88
+        backup_services:
+            postgres:
+                protocol: tcp
+                dst_port: 5432
+            mysql:
+                protocol: tcp
+                dst_port: 3306
+
+    app_sets:
+        WEB:
+            - junos-http
+            - junos-https
+        DNS:
+            - junos-dns-udp
+            - junos-dns-tcp
+
+
+route_maps_common:
+    DENY_EXPORT:
+        DEFAULT_DENY_EXPORT:
+            then:
+                terminate_action: reject
+
+    DENY_IMPORT:
+        DEFAULT_DENY_IMPORT:
+            then:
+                terminate_action: reject

@@ -1,0 +1,287 @@
+#jinja2:lstrip_blocks:True
+{% set personality = junos.personality | lower %}
+{% if "srx" in personality %}
+{% if firewall_policies_datacentre is defined or firewall_policies_branch is defined or firewall_policies_common is defined or firewall_policies is defined %}
+security {
+    policies {
+        {% if firewall_policies.global is defined %}
+        {% for policy in firewall_policies.global %}
+	    global {
+        	policy {{ policy.name}} {
+            	match {
+                    {% if policy.src is defined %}
+                    {% if policy.src is string %}
+                    source-address {{ policy.src }};
+                    {% else %}
+                	source-address [ {{ policy.src|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.dst is defined %}
+                    {% if policy.dst is string %}
+                    destination-address {{ policy.dst }};
+                    {% else %}
+                	destination-address [ {{ policy.dst|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.application is defined %}
+                    {% if policy.application is string %}
+                    application {{ policy.application }};
+                    {% else %}
+                	application [ {{ policy.application|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.from_zone is defined %}
+                    {% if policy.from_zone is string %}
+                    from-zone {{ policy.from_zone }};
+                    {% else %}
+                	from-zone [ {{ policy.from_zone|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.to_zone is defined %}
+                    {% if policy.to_zone is string %}
+                    to-zone {{ policy.to_zone }};
+                    {% else %}
+                	to-zone [ {{ policy.to_zone|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+            	}
+            	then {
+                    {% if policy.terminate_action is defined %}
+                	{{ policy.terminate_action }};
+                    {% endif %}
+                    {% if policy.actions.log_actions is defined %}
+                    {% if policy.actions.log_actions is string %}
+        	        log {
+                	    {{ policy.actions.log_actions }};
+                		}
+                    {% else %}
+        	        log {
+                        {% for log in policy.actions.log_actions %}
+                	    {{ log }};
+                        {% endfor %}
+                		}
+                    {% endif %}
+                    {% endif %}
+
+            	}
+            }
+        }
+    {% endfor %}
+    {% endif %}
+
+        {% if firewall_policies_datacentre.global is defined %}
+        {% for policy in firewall_policies_datacentre.global %}
+	    global {
+        	policy {{ policy.name}} {
+            	match {
+                    {% if policy.src is defined %}
+                    {% if policy.src is string %}
+                    source-address {{ policy.src }};
+                    {% else %}
+                	source-address [ {{ policy.src|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.src_address_exluded is defined and policy.src_address_exluded == True %}
+                    source-address-excluded;
+                    {% endif %}
+                    {% if policy.dst is defined %}
+                    {% if policy.dst is string %}
+                    destination-address {{ policy.dst }};
+                    {% else %}
+                	destination-address [ {{ policy.dst|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.dst_address_exluded is defined and policy.dst_address_exluded == True %}
+                    destination-address-excluded;
+                    {% endif %}
+                    {% if policy.application is defined %}
+                    {% if policy.application is string %}
+                    application {{ policy.application }};
+                    {% else %}
+                	application [ {{ policy.application|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.from_zone is defined %}
+                    {% if policy.from_zone is string %}
+                    from-zone {{ policy.from_zone }};
+                    {% else %}
+                	from-zone [ {{ policy.from_zone|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+                    {% if policy.to_zone is defined %}
+                    {% if policy.to_zone is string %}
+                    to-zone {{ policy.to_zone }};
+                    {% else %}
+                	to-zone [ {{ policy.to_zone|join(" ") }} ];
+                    {% endif %}
+                    {% endif %}
+            	}
+            	then {
+                    {% if policy.terminate_action is defined %}
+                	{{ policy.terminate_action }};
+                    {% endif %}
+                    {% if policy.actions.log_actions is defined %}
+                    {% if policy.actions.log_actions is string %}
+        	        log {
+                	    {{ policy.actions.log_actions }};
+                		}
+                    {% else %}
+        	        log {
+                        {% for log in policy.actions.log_actions %}
+                	    {{ log }};
+                        {% endfor %}
+                		}
+                    {% endif %}
+                    {% endif %}
+
+            	}
+            }
+        }
+    {% endfor %}
+    {% endif %}
+
+{% if firewall_policies_branch.global is defined %}
+{% for policy in firewall_policies_branch.global %}
+global {
+    policy {{ policy.name}} {
+        match {
+            {% if policy.src is defined %}
+            {% if policy.src is string %}
+            source-address {{ policy.src }};
+            {% else %}
+            source-address [ {{ policy.src|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.src_address_exluded is defined and policy.src_address_exluded == True %}
+            source-address-excluded;
+            {% endif %}
+            {% if policy.dst is defined %}
+            {% if policy.dst is string %}
+            destination-address {{ policy.dst }};
+            {% else %}
+            destination-address [ {{ policy.dst|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.dst_address_exluded is defined and policy.dst_address_exluded == True %}
+            destination-address-excluded;
+            {% endif %}
+            {% if policy.application is defined %}
+            {% if policy.application is string %}
+            application {{ policy.application }};
+            {% else %}
+            application [ {{ policy.application|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.from_zone is defined %}
+            {% if policy.from_zone is string %}
+            from-zone {{ policy.from_zone }};
+            {% else %}
+            from-zone [ {{ policy.from_zone|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.to_zone is defined %}
+            {% if policy.to_zone is string %}
+            to-zone {{ policy.to_zone }};
+            {% else %}
+            to-zone [ {{ policy.to_zone|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+        }
+        then {
+            {% if policy.terminate_action is defined %}
+            {{ policy.terminate_action }};
+            {% endif %}
+            {% if policy.actions.log_actions is defined %}
+            {% if policy.actions.log_actions is string %}
+            log {
+                {{ policy.actions.log_actions }};
+                }
+            {% else %}
+            log {
+                {% for log in policy.actions.log_actions %}
+                {{ log }};
+                {% endfor %}
+                }
+            {% endif %}
+            {% endif %}
+
+        }
+    }
+}
+{% endfor %}
+{% endif %}
+
+{% if firewall_policies_common.global is defined %}
+{% for policy in firewall_policies_common.global %}
+global {
+    policy {{ policy.name}} {
+        match {
+            {% if policy.src is defined %}
+            {% if policy.src is string %}
+            source-address {{ policy.src }};
+            {% else %}
+            source-address [ {{ policy.src|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.src_address_exluded is defined and policy.src_address_exluded == True %}
+            source-address-excluded;
+            {% endif %}
+            {% if policy.dst is defined %}
+            {% if policy.dst is string %}
+            destination-address {{ policy.dst }};
+            {% else %}
+            destination-address [ {{ policy.dst|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.dst_address_exluded is defined and policy.dst_address_exluded == True %}
+            destination-address-excluded;
+            {% endif %}
+            {% if policy.application is defined %}
+            {% if policy.application is string %}
+            application {{ policy.application }};
+            {% else %}
+            application [ {{ policy.application|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.from_zone is defined %}
+            {% if policy.from_zone is string %}
+            from-zone {{ policy.from_zone }};
+            {% else %}
+            from-zone [ {{ policy.from_zone|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+            {% if policy.to_zone is defined %}
+            {% if policy.to_zone is string %}
+            to-zone {{ policy.to_zone }};
+            {% else %}
+            to-zone [ {{ policy.to_zone|join(" ") }} ];
+            {% endif %}
+            {% endif %}
+        }
+        then {
+            {% if policy.terminate_action is defined %}
+            {{ policy.terminate_action }};
+            {% endif %}
+            {% if policy.actions.log_actions is defined %}
+            {% if policy.actions.log_actions is string %}
+            log {
+                {{ policy.actions.log_actions }};
+                }
+            {% else %}
+            log {
+                {% for log in policy.actions.log_actions %}
+                {{ log }};
+                {% endfor %}
+                }
+            {% endif %}
+            {% endif %}
+
+        }
+    }
+}
+{% endfor %}
+{% endif %}
+    }
+}
+{% endif %}
+{% endif %}

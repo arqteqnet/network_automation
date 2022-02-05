@@ -1,0 +1,6 @@
+---
+- name: prefix_list settings
+  template:
+    src: prefix_lists.j2
+    dest: "{{ config_assemble_build }}/prefix_lists.conf"
+

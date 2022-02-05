@@ -1,0 +1,22 @@
+---
+system_common:
+    name_servers:
+        - 10.192.101.20
+        - 10.192.101.21
+    ntp_servers:
+        - 10.192.101.22
+        - 10.192.101.23
+
+routes_common:
+    static:
+        OOB:
+            net: 10.192.0/0
+            prefix: 16
+            options:
+                gw: 10.192.100.1
+
+        BACKUPS:
+            net: "{{ lookup('dig', 'backup0.infra.mgmt.example.com') }}"
+            prefix: 31
+            options:
+                gw: 10.192.100.1

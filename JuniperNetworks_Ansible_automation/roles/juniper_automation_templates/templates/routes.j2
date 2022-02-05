@@ -1,0 +1,97 @@
+#jinja2:lstrip_blocks:True
+{% set model = junos.model | lower %}
+{% set personality = junos.personality | lower %}
+
+{% if routes_common is defined or routes is defined  %}
+routing-options {
+    {% if routes_common is defined %}
+    {% if routes_common.static is defined %}
+    static {
+        {% for name, rte in routes_common.static.items() %}
+        {% if rte.options|length == 1 and rte.options.gw is defined  %}
+        route {{ rte.net }}/{{ rte.prefix }} next-hop {{ rte.options.gw }};
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.retain is defined %}
+        route {{ rte.net }}/{{ rte.prefix }} retain;
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.reject is defined  %}
+        route {{ rte.net }}/{{ rte.prefix }} reject;
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.discard is defined %}
+        route {{ rte.net }}/{{ rte.prefix }} discard;
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.preference is defined %}
+        route {{ rte.net }}/{{ rte.prefix }} {
+            preference {{ rte.options.preference }};
+        }
+        {% endif %}
+        {% if rte.options|length > 1 %}
+        route {{ rte.net }}/{{ rte.prefix }} {
+            {% if rte.options.gw is defined %}
+            next-hop {{ rte.options.gw }};
+            {% endif %}
+            {% if rte.options.qualified_gw is defined %}
+            qualified-next-hop {{ rte.options.qualified_gw }};
+            {% endif %}
+            {% if rte.options.preference is defined %}
+            preference {{ rte.options.preference }};
+            {% endif %}
+            {% if rte.options.reject is defined %}
+            reject;
+            {% endif %}
+            {% if rte.options.discard is defined %}
+            discard;
+            {% endif %}
+        }
+        {% endif %}
+        {% endfor %}
+    }
+    {% endif %}
+    {% endif %}
+
+    {% if routes is defined %}
+    {% if routes.static is defined %}
+    static {
+        {% for name, rte in routes.static.items() %}
+        {% if rte.options|length == 1 and rte.options.gw is defined  %}
+        route {{ rte.net }}/{{ rte.prefix }} next-hop {{ rte.options.gw }};
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.retain is defined %}
+        route {{ rte.net }}/{{ rte.prefix }} retain;
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.reject is defined  %}
+        route {{ rte.net }}/{{ rte.prefix }} reject;
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.discard is defined %}
+        route {{ rte.net }}/{{ rte.prefix }} discard;
+        {% endif %}
+        {% if rte.options|length == 1 and rte.options.preference is defined %}
+        route {{ rte.net }}/{{ rte.prefix }} {
+            preference {{ rte.options.preference }};
+        }
+        {% endif %}
+        {% if rte.options|length > 1 %}
+        route {{ rte.net }}/{{ rte.prefix }} {
+            {% if rte.options.gw is defined %}
+            next-hop {{ rte.options.gw }};
+            {% endif %}
+            {% if rte.options.qualified_gw is defined %}
+            qualified-next-hop {{ rte.options.qualified_gw }};
+            {% endif %}
+            {% if rte.options.preference is defined %}
+            preference {{ rte.options.preference }};
+            {% endif %}
+            {% if rte.options.reject is defined %}
+            reject;
+            {% endif %}
+            {% if rte.options.discard is defined %}
+            discard;
+            {% endif %}
+        }
+        {% endif %}
+        {% endfor %}
+    }
+    {% endif %}
+    {% endif %}
+}
+{% endif %}

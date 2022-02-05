@@ -1,0 +1,10 @@
+### PIP Requirements
+# Juniper Junos Role
+junos-eznc >= 2.5.0
+jxmlease   >= 1.0.1
+
+# DNS Lookups
+dnspython
+
+# Vault
+hvac

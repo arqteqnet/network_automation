@@ -1,0 +1,71 @@
+---
+- name: Merge Diff
+  tags: [ diff_merge, never ]
+  juniper_junos_config:
+    provider: "{{ connection_settings }}"
+    src: "{{ config_file }}"
+    load: merge
+    commit_check: yes
+    commit: no
+    diff: yes
+    diffs_file: "{{ config_assemble }}/{{ playbook_name }}_diff"
+    return_output: yes
+    ignore_warning: yes
+  register: config_results
+
+- name: Merge Config
+  tags: [ merge, never ]
+  juniper_junos_config:
+    provider: "{{ connection_settings }}"
+    src: "{{ config_file }}"
+    load: merge
+    commit_check: yes
+    commit: yes
+    diff: yes
+    diffs_file: "{{ config_assemble }}/{{ playbook_name }}_diff"
+    return_output: yes
+    comment: "Playbook {{ playbook_name }}, commit confirmed {{ commit_confirm }}"
+    confirmed: "{{ commit_confirm }}"
+    ignore_warning: yes
+  register: config_results
+
+- name: Override Diff
+  tags: [ diff_override, never ]
+  juniper_junos_config:
+    provider: "{{ connection_settings }}"
+    src: "{{ config_file }}"
+    load: override
+    commit_check: yes
+    commit: no
+    diff: yes
+    diffs_file: "{{ config_assemble }}/{{ playbook_name }}_diff"
+    return_output: yes
+    ignore_warning: yes
+  register: config_results
+
+
+- name: Override Config
+  tags: [ override, never ]
+  juniper_junos_config:
+    provider: "{{ connection_settings }}"
+    src: "{{ config_file }}"
+    load: override
+    commit_check: yes
+    diff: yes
+    diffs_file: "{{ config_assemble }}/{{ playbook_name }}_diff"
+    return_output: yes
+    comment: "Playbook {{ playbook_name }}, commit confirmed {{ commit_confirm }}"
+    confirmed: "{{ commit_confirm }}"
+    ignore_warning: yes
+  register: config_results
+
+
+- name: show diff
+  debug:
+    var: config_results.diff_lines
+  when: config_results.diff_lines is defined
+
+- name: delete generated config file
+  file:
+    path: "{{ config_file }}"
+    state: absent

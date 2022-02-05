@@ -1,0 +1,85 @@
+#jinja2:lstrip_blocks:True
+{% set model = junos.model | lower %}
+{% set personality = junos.personality | lower %}
+{% if personality == "switch" %}
+{% if aaa is defined %}
+access {
+    {% if aaa.radius_server is defined %}
+    radius-server {
+    {% for server in aaa.radius_server %}
+    {{ server.ip }} {
+        port {{ server.port|default(1812) }};
+        secret "{{ server.secret }}"; ## SECRET-DATA
+        {% if server.retry is defined %}
+        retry {{ server.retry }};
+        {% else %}
+        retry 3;
+        {% endif %}
+        {% if server.src_ip is defined %}
+        source-address {{ server.src_ip }};
+        {% endif %}
+    }
+    {% endfor %}
+}
+{% endif %}
+{% if aaa.auth_profiles is defined %}
+    {% for profile in aaa.auth_profiles %}
+    profile {{ profile.name }} {
+        {% if profile.auth_order is mapping %}
+        authentication-order {{ profile.auth_order }};
+        {% else %}
+        authentication-order [ {{ profile.auth_order|join(" ") }} ];
+        {% endif %}
+        {% if profile.radius_server is defined %}
+        radius {
+            {% if profile.radius_server is mapping %}
+            authentication-server {{ profile.radius_server }};
+            {% else %}
+            authentication-server {{ profile.radius_server|join(" ") }};
+            {% endif %}
+        }
+        {% endif %}
+    }
+    {% endfor %}
+{% endif %}
+}
+{% if aaa.dot1x is defined %}
+protocols {
+authenticator {
+    {% for profile in aaa.dot1x.auth_profile %}
+    authentication-profile-name {{ profile.name }};
+    {% if profile.interface is defined %}
+    interface {
+        {% for iface, cfg in profile.interface.items() %}
+        {{ iface }} {
+            {% if cfg.supplicant is defined %}
+            supplicant {{ cfg.supplicant }};
+            {% else %}
+            supplicant single-supplicant;
+            {% endif %}
+            {% if cfg.reauth_time is defined %}
+            reauthentication {{ cfg.reauth_time }};
+            {% else %}
+            reauthentication 3600;
+            {% endif %}
+            {% if cfg.guest_vlan is defined %}
+            guest-vlan {{ cfg.guest_vlan }};
+            {% endif %}
+            {% if cfg.reject_vlan is defined %}
+            server-reject-vlan {{ cfg.reject_vlan }};
+            {% endif %}
+            {% if cfg.lldp_med_bypass is defined and cfg.lldp_med_bypass is True %}
+            lldp-med-bypass;
+            {% endif %}
+            {% if cfg.server_fail_vlan is defined %}
+            server-fail vlan-name {{ cfg.server_fail_vlan }};
+            {% endif %}
+        }
+        {% endfor %}
+    }
+    {% endif %}
+    {% endfor %}
+}
+{% endif %}
+{% endif %}
+{% endif %}

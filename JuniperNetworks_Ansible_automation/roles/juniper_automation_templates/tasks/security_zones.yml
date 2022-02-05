@@ -1,0 +1,5 @@
+---
+- name: security zone settings
+  template:
+    src: security_zones.j2
+    dest: "{{ config_assemble_build }}/security_zones.conf"
